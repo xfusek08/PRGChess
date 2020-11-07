@@ -26,14 +26,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     src
 )
 
+message(${SHADER_DEBUG_COMPILE_DEFINITIONS})
+
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     "PROJECT_NAME=\"${PROJECT_NAME}\""
-    $<$<CONFIG:DEBUG>:
-        "DEBUG"
-        ${SHADER_DEBUG_COMPILE_DEFINITIONS}
-    >
-    $<$<CONFIG:RELEASE>:
-        "RELEASE"
-        ${SHADER_RELEASE_COMPILE_DEFINITIONS}
-    >
+    "DEBUG"
+    ${SHADER_DEBUG_COMPILE_DEFINITIONS}
 )

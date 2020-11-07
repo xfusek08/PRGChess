@@ -27,10 +27,15 @@ class App : public Application
             cout << "Fps: " << frameStat.frames << "\n";
         });
 
+        auto resUniform = glGetUniformLocation(prg, "resolution");
+
+        glUniform2ui(resUniform, this->mainWindow->getWidth(), this->mainWindow->getHeight());
+
         return true;
     }
 
     bool update(const Event &event) {
+        // todo on resize set screen size uniform
         return true;
     }
 
@@ -39,7 +44,7 @@ class App : public Application
         glPointSize(10);
         glBindVertexArray(vao);
         glUseProgram(prg);
-        glDrawArrays(GL_TRIANGLES,0,3);
+        glDrawArrays(GL_TRIANGLES,0,6);
     }
 };
 
