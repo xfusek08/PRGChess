@@ -8,7 +8,7 @@ set(SHADER_FILES
     vertex.vs
     fragment.fs
 )
-include(LoadSharedFiles.cmake)
+include(vendor/RenderBase/cmakeUtils/LoadSharedFiles.cmake)
 
 set(SOURCES
     src/main.cpp
