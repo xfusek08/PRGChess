@@ -1,0 +1,3 @@
+[submodule "vendor/RenderBase"]
+	path = vendor/RenderBase
+	url = https://github.com/xfusek08/RenderBase
