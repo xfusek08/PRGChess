@@ -14,6 +14,17 @@ set(SOURCES
     src/main.cpp
 )
 
+set(COMPILE_DEFINITIONS
+    "PROJECT_NAME=\"${PROJECT_NAME}\""
+    $<$<CONFIG:Debug>:
+        "DEBUG"
+        ${SHADER_DEBUG_COMPILE_DEFINITIONS}
+    >
+    $<$<CONFIG:Release>:
+        ${SHADER_RELEASE_COMPILE_DEFINITIONS}
+    >
+)
+
 add_subdirectory(vendor/RenderBase)
 
 add_executable(${PROJECT_NAME}
@@ -26,10 +37,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     src
 )
 
-message(${SHADER_DEBUG_COMPILE_DEFINITIONS})
-
-target_compile_definitions(${PROJECT_NAME} PUBLIC
-    "PROJECT_NAME=\"${PROJECT_NAME}\""
-    "DEBUG"
-    ${SHADER_DEBUG_COMPILE_DEFINITIONS}
-)
+message(" ")
+message("====== ${PROJECT_NAME} compile definitions =======")
+message(${COMPILE_DEFINITIONS})
+message("==================================================")
+message(" ")
+target_compile_definitions(${PROJECT_NAME} PUBLIC ${COMPILE_DEFINITIONS})
