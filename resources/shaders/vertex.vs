@@ -13,5 +13,5 @@ void main() {
         case 5: fragCoord = vec2(-1,-1); break;
     }
 
-     gl_Position = vec4(fragCoord,0,1);
+     gl_Position = vec4(fragCoord,1,1);
 }

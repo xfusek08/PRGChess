@@ -4,7 +4,8 @@
 
 #include <RenderBase/rb.h>
 
-#include <RenderBase/logging.h>
+#include <RenderBase/tools/logging.h>
+#include <RenderBase/tools/camera.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -21,6 +22,8 @@ class App : public Application
     float cameraRotX = 0.0f;
     float cameraRotY = 0.0f;
 
+    unique_ptr<OrbitCameraController> orbitCamera;
+
     bool init() {
 
         glClearColor(0, 0, 0, 1);
@@ -36,28 +39,35 @@ class App : public Application
             return false;
         }
 
-        this->mainWindow->onFPSCount([=](FrameStat frameStat) {
-            cout << "Fps: " << frameStat.frames << "\n";
-        });
+        // this->mainWindow->onFPSCount([=](FrameStat frameStat) {
+        //     cout << "Fps: " << frameStat.frames << "\n";
+        // });
 
+        // camera setup
+        auto cam = make_shared<Camera>(glm::vec3(0, 1, 0));
+        cam->setAspectRatio(float(mainWindow->getWidth()) / float(mainWindow->getHeight()));
+        cam->setPosition(glm::vec3(0, 5, -5));
+        cam->setTargetPosition(glm::vec3(0, 1, 0));
+        orbitCamera = make_unique<OrbitCameraController>(cam);
         updateCamera();
 
-        prg->use();
+        // basic scene
+        prg->uniform("sphere", glm::vec4(0, 1, 0, 1));
+        prg->uniform("lightPosition", glm::vec3(1, 5, -1));
+        prg->uniform("planeHeight", 0.0f);
 
         return true;
     }
 
     bool update(const Event &event) {
-        // todo on resize set screen size uniform
-        if (event.type == EventType::MouseMove && event.mouseMoveData.buttons.left) {
-            cameraRotX -= event.mouseMoveData.yMovedRel;
-            cameraRotY += event.mouseMoveData.xMovedRel;
+        if (orbitCamera->processEvent(event)) {
             updateCamera();
         }
         return true;
     }
 
     void draw() {
+        prg->use();
         glClear(GL_COLOR_BUFFER_BIT);
         glPointSize(10);
         glBindVertexArray(vao);
@@ -65,20 +75,17 @@ class App : public Application
     }
 
     void updateCamera() {
-        glm::vec3 cameraPosition    = glm::vec3(0, 1, 0);
-        float aspectRatio           = float(this->mainWindow->getWidth()) / float(this->mainWindow->getHeight());
-        glm::mat4 cameraOrientation = glm::rotate(
-            glm::rotate(
-                glm::mat4(1),
-                cameraRotX, glm::vec3(1,0,0)
-            ),
-            cameraRotY, glm::vec3(0,1,0)
-        );
+        // LOG_DEBUG("Position:         " << glm::to_string(orbitCamera->camera->getPosition()));
+        // LOG_DEBUG("Target:           " << glm::to_string(orbitCamera->camera->getTargetPosition()));
+        // LOG_DEBUG("Direction:        " << glm::to_string(orbitCamera->camera->getDirection()));
+        // LOG_DEBUG("cameraFOVDegrees: " << orbitCamera->camera->getFovDegrees());
 
-        prg->uniform("aspectRatio",       aspectRatio);
-        prg->uniform("cameraPosition",    cameraPosition);
-        prg->uniform("cameraOrientation", cameraOrientation);
-        prg->uniform("viewDistance",      -5.0f);
+
+        prg->uniform("aspectRatio",      orbitCamera->camera->getAspectRatio());
+        prg->uniform("cameraPosition",   orbitCamera->camera->getPosition());
+        prg->uniform("cameraDirection",  orbitCamera->camera->getDirection());
+        prg->uniform("cameraUp",         orbitCamera->camera->getUpVector());
+        prg->uniform("cameraFOVDegrees", orbitCamera->camera->getFovDegrees());
     }
 };
 
