@@ -39,9 +39,12 @@ class App : public Application
             return false;
         }
 
-        // this->mainWindow->onFPSCount([=](FrameStat frameStat) {
-        //     cout << "Fps: " << frameStat.frames << "\n";
-        // });
+        this->mainWindow->getPerformanceAnalyzer()->perPeriodReport(1s, [=](IntervalPerformanceReport report) {
+            cout << "fps: " << report.frames << "\n";
+            cout << "Average frame duration: " << report.averageFrameTime.count() << " us\n";
+            cout << "Longest frame: " << report.maxFrameTime.count() << " us\n";
+            cout << "shortest frame: " << report.minFrameTime.count() << " us\n";
+        });
 
         // camera setup
         auto cam = make_shared<Camera>(glm::vec3(0, 1, 0));
