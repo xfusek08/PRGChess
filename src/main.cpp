@@ -2,8 +2,9 @@
 #include <stdexcept>
 #include <iostream>
 
-#include <RenderBase/rb.h>
+#define DISABLE_LOGGING
 
+#include <RenderBase/rb.h>
 #include <RenderBase/tools/logging.h>
 #include <RenderBase/tools/camera.h>
 
@@ -31,6 +32,7 @@ class App : public Application
 
         prg = make_unique<Program>(
             make_shared<Shader>(GL_VERTEX_SHADER, SHADER_VERTEX),
+            make_shared<Shader>(GL_FRAGMENT_SHADER, SHADER_PRIMITIVE_SDF),
             make_shared<Shader>(GL_FRAGMENT_SHADER, SHADER_FRAGMENT)
         );
 
@@ -48,16 +50,15 @@ class App : public Application
 
         // camera setup
         auto cam = make_shared<Camera>(glm::vec3(0, 1, 0));
+        cam->setFov(glm::radians(60.0f));
         cam->setAspectRatio(float(mainWindow->getWidth()) / float(mainWindow->getHeight()));
-        cam->setPosition(glm::vec3(0, 5, -5));
-        cam->setTargetPosition(glm::vec3(0, 1, 0));
+        cam->setPosition(glm::vec3(0, 10, -10));
+        cam->setTargetPosition(glm::vec3(0, 2, 0));
         orbitCamera = make_unique<OrbitCameraController>(cam);
         updateCamera();
 
         // basic scene
-        prg->uniform("sphere", glm::vec4(0, 1, 0, 1));
-        prg->uniform("lightPosition", glm::vec3(1, 5, -1));
-        prg->uniform("planeHeight", 0.0f);
+        prg->uniform("lightPosition", glm::vec3(1, 10, -5));
 
         return true;
     }
@@ -72,23 +73,22 @@ class App : public Application
     void draw() {
         prg->use();
         glClear(GL_COLOR_BUFFER_BIT);
-        glPointSize(10);
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES,0,6);
     }
 
     void updateCamera() {
-        // LOG_DEBUG("Position:         " << glm::to_string(orbitCamera->camera->getPosition()));
-        // LOG_DEBUG("Target:           " << glm::to_string(orbitCamera->camera->getTargetPosition()));
-        // LOG_DEBUG("Direction:        " << glm::to_string(orbitCamera->camera->getDirection()));
-        // LOG_DEBUG("cameraFOVDegrees: " << orbitCamera->camera->getFovDegrees());
+        LOG_DEBUG("Position:         " << glm::to_string(orbitCamera->camera->getPosition()));
+        LOG_DEBUG("Target:           " << glm::to_string(orbitCamera->camera->getTargetPosition()));
+        LOG_DEBUG("Direction:        " << glm::to_string(orbitCamera->camera->getDirection()));
+        LOG_DEBUG("cameraFOVDegrees: " << glm::degrees(orbitCamera->camera->getFov()));
+        LOG_DEBUG("frustumCorners:   " << glm::to_string(orbitCamera->camera->getFrustumCorners()));
 
-
-        prg->uniform("aspectRatio",      orbitCamera->camera->getAspectRatio());
-        prg->uniform("cameraPosition",   orbitCamera->camera->getPosition());
-        prg->uniform("cameraDirection",  orbitCamera->camera->getDirection());
-        prg->uniform("cameraUp",         orbitCamera->camera->getUpVector());
-        prg->uniform("cameraFOVDegrees", orbitCamera->camera->getFovDegrees());
+        float fovTangent = glm::tan(orbitCamera->camera->getFov() / 2.0f);
+        prg->uniform("cameraPosition",    orbitCamera->camera->getPosition());
+        prg->uniform("cameraDirection",   orbitCamera->camera->getDirection());
+        prg->uniform("upRayDistorsion",   orbitCamera->camera->getOrientationUp()   * fovTangent);
+        prg->uniform("leftRayDistorsion", orbitCamera->camera->getOrientationLeft() * fovTangent * orbitCamera->camera->getAspectRatio());
     }
 };
 

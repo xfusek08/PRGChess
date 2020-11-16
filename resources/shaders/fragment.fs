@@ -1,39 +1,32 @@
 #version 460 core
 
-in vec2 fragCoord;
-out vec4 fColor;
-
-// scene
-uniform vec4 sphere;
-uniform vec3 lightPosition;
-uniform float planeHeight;
-
-// camera
-uniform float aspectRatio;
-uniform float cameraFOVDegrees;
-uniform vec3  cameraPosition;
-uniform vec3  cameraDirection;
-uniform vec3  cameraUp;
-
 #define MAX_STEPS    100
 #define MAX_DISTANCE 1000.0
 #define HIT_DISTANCE 0.01
 
-float getDistanceToScene(vec3 position) {
-    float distanceToSphere = length(position - sphere.xyz) - sphere.w;
+in vec2 fragCoord;
+in vec3 rayDirection;
+out vec4 fColor;
 
-    float planeDistance = position.y;
+float sdToScene(vec3 position);
 
-    return min(distanceToSphere, planeDistance);
-}
+// uniforms
+
+// camera
+uniform vec3 cameraPosition;
+uniform vec3 cameraDirection;
+uniform vec3 upRayDistorsion;
+uniform vec3 leftRayDistorsion;
+
+uniform vec3  lightPosition;
 
 vec3 getNormal(vec3 point) {
-    float d = getDistanceToScene(point);
+    float d = sdToScene(point);
     vec2 e = vec2(0.01, 0);
     vec3 n = d - vec3(
-        getDistanceToScene(point-e.xyy),
-        getDistanceToScene(point-e.yxy),
-        getDistanceToScene(point-e.yyx)
+        sdToScene(point - e.xyy),
+        sdToScene(point - e.yxy),
+        sdToScene(point - e.yyx)
     );
 
     return normalize(n);
@@ -43,7 +36,7 @@ float rayMarch(vec3 originPoint, vec3 direction) {
     float distanceMarched = 0;
     for (int step = 0; step < MAX_STEPS; ++step) {
         vec3 position = originPoint + distanceMarched * direction;
-        distanceMarched += getDistanceToScene(position);
+        distanceMarched += sdToScene(position);
         if (distanceMarched > MAX_DISTANCE || distanceMarched < HIT_DISTANCE) {
             break; // hit
         }
@@ -64,28 +57,12 @@ float getLight(vec3 point) {
     return diff;
 }
 
-vec3 computeRayDirection(vec2 uv) {
-    // return normalize(vec3(uv.xy, 1)); // marching forwards
-
-    vec3 left = normalize(cross(cameraUp, cameraDirection));
-    vec3 upLocal = normalize(cross(cameraDirection, left));
-    float h = tan((3.141592 * cameraFOVDegrees) / 180);
-    float w = h * aspectRatio;
-    return normalize(cameraDirection + upLocal * h * uv.y + left * w * uv.x);
-}
-
 void main(){
-    // aspectRatio = 1.5;
-    vec2 uv = fragCoord;
-
-    vec3 rayDirection = computeRayDirection(uv);
-
-    float dist = rayMarch(cameraPosition, rayDirection);
-
-    vec3 position = cameraPosition + rayDirection * dist;
+    vec3 rayDirection = normalize(cameraDirection + fragCoord.y * upRayDistorsion + fragCoord.x * leftRayDistorsion);
+    float dist        = rayMarch(cameraPosition, rayDirection);
+    vec3 position     = cameraPosition + rayDirection * dist;
 
     vec3 color;
-
     // axes
     if (dist < (MAX_DISTANCE / 2) - 1 && abs(position.x) < 0.05) {
         if (position.z > 0 ) {
@@ -102,8 +79,5 @@ void main(){
     } else {
         color = vec3(getLight(position));
     }
-
-    // vec3 color = rayDirection;
-    // vec3 color = vec3(length(uv));
     fColor = vec4(color, 1);
 }

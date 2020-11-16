@@ -7,11 +7,13 @@ set(CMAKE_CXX_STANDARD 17)
 set(SHADER_FILES
     vertex.vs
     fragment.fs
+    primitive_sdf.fs
 )
 include(vendor/RenderBase/cmakeUtils/LoadSharedFiles.cmake)
 
 set(SOURCES
     src/main.cpp
+    src/scene.h
 )
 
 set(COMPILE_DEFINITIONS
