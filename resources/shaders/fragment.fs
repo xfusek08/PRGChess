@@ -1,7 +1,7 @@
 #version 460 core
 
 #define MAX_STEPS    100
-#define MAX_DISTANCE 1000.0
+#define MAX_DISTANCE 200.0
 #define HIT_DISTANCE 0.01
 
 in vec2 fragCoord;
@@ -22,7 +22,7 @@ uniform vec3  lightPosition;
 
 vec3 getNormal(vec3 point) {
     float d = sdToScene(point);
-    vec2 e = vec2(0.01, 0);
+    vec2 e = vec2(HIT_DISTANCE, 0);
     vec3 n = d - vec3(
         sdToScene(point - e.xyy),
         sdToScene(point - e.yxy),
@@ -58,26 +58,9 @@ float getLight(vec3 point) {
 }
 
 void main(){
-    vec3 rayDirection = normalize(cameraDirection + fragCoord.y * upRayDistorsion + fragCoord.x * leftRayDistorsion);
+    vec3  rayDirection = normalize(cameraDirection + fragCoord.y * upRayDistorsion + fragCoord.x * leftRayDistorsion);
     float dist        = rayMarch(cameraPosition, rayDirection);
-    vec3 position     = cameraPosition + rayDirection * dist;
-
-    vec3 color;
-    // axes
-    if (dist < (MAX_DISTANCE / 2) - 1 && abs(position.x) < 0.05) {
-        if (position.z > 0 ) {
-            color = vec3(0.4, 0.7, 1.0); // z axis positive
-        } else {
-            color = vec3(0.1, 0.1, 1.0); // z axis negative
-        }
-    } else if (dist < (MAX_DISTANCE / 2) - 1 && abs(position.z) < 0.05) {
-        if (position.x > 0 ) {
-            color = vec3(1, 0.1, 0.1); // x axis positive
-        } else {
-            color = vec3(1, 0.7, 0.4); // x axis negative
-        }
-    } else {
-        color = vec3(getLight(position));
-    }
-    fColor = vec4(color, 1);
+    vec3  position    = cameraPosition + rayDirection * dist;
+    vec3  color       = vec3(getLight(position));
+    fColor            = vec4(color, 1);
 }
