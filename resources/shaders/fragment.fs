@@ -1,6 +1,6 @@
 #version 460 core
 
-#define MAX_STEPS    100
+#define MAX_STEPS    50
 #define MAX_DISTANCE 200.0
 #define HIT_DISTANCE 0.01
 
@@ -45,6 +45,7 @@ float rayMarch(vec3 originPoint, vec3 direction) {
 }
 
 float getLight(vec3 point) {
+
     vec3 l = normalize(lightPosition - point);
     vec3 n = getNormal(point);
 

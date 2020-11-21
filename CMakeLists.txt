@@ -13,18 +13,24 @@ include(vendor/RenderBase/cmakeUtils/LoadSharedFiles.cmake)
 
 set(SOURCES
     src/main.cpp
-    src/scene.h
+    src/scene.h src/scene.cpp
 )
 
 set(COMPILE_DEFINITIONS
     "PROJECT_NAME=\"${PROJECT_NAME}\""
-    $<$<CONFIG:Debug>:
-        "DEBUG"
-        ${SHADER_DEBUG_COMPILE_DEFINITIONS}
-    >
-    $<$<CONFIG:Release>:
-        ${SHADER_RELEASE_COMPILE_DEFINITIONS}
-    >
+
+    # vscode intelisence  cannot recognize the genrator pattern so it has to be hard-coded
+    "DEBUG"
+    ${SHADER_DEBUG_COMPILE_DEFINITIONS}
+
+    # Proper compile redinitions
+    # $<$<CONFIG:Debug>:
+    #     "DEBUG"
+    #     ${SHADER_DEBUG_COMPILE_DEFINITIONS}
+    # >
+    # $<$<CONFIG:Release>:
+    #     ${SHADER_RELEASE_COMPILE_DEFINITIONS}
+    # >
 )
 
 add_subdirectory(vendor/RenderBase)
