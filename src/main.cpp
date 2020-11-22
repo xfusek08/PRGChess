@@ -64,8 +64,7 @@ class App : public Application
         updateCamera();
 
         // scene setup
-        prg->uniform("lightPosition", glm::vec3(-25, 50, -25)); // in the future make light part of the scene
-        prg->uniform("ambientLight", glm::vec3(0.1, 0.1, 0.1)); // in the future make light part of the scene
+        prg->uniform("lightPosition", glm::vec3(-10, 20, 5)); // in the future make light part of the scene
         buildScene();
         updateScene();
 
@@ -139,8 +138,8 @@ class App : public Application
 
         // may the floor be another model in the future
         Primitive floor = { PrimitiveType::Box };
-        floor.data = {8.0f, 1.0f, 8.0f, 0.2f};
-        floor.transform.translate({0, 1, 0});
+        floor.data = {5.0f, 1.0f, 5.0f, 0.4f};
+        floor.transform.translate({0, 1.5, 0});
 
         Primitive sphere1 = { PrimitiveType::Sphere };
         sphere1.data.x = 1.0;
@@ -154,14 +153,21 @@ class App : public Application
 
         Primitive sphere3 = { PrimitiveType::Sphere };
         sphere3.data.x = 3.0;
-        sphere3.transform.translate({2.7, -2.5, 0});
+        sphere3.transform.translate({2.7, -2.5, 1.7});
         sphere3.blending = 0.1;
-        sphere3.operation = PrimitiveOperation::Intersect;
+        sphere3.operation = PrimitiveOperation::Substract;
+
+        Primitive sphere4 = { PrimitiveType::Sphere };
+        sphere4.data.x = 3.9;
+        sphere4.transform.translate({2.7, -2.5, 1.7});
+        sphere4.blending = 0.1;
+        sphere4.operation = PrimitiveOperation::Intersect;
 
         auto model = make_shared<Model>(
             sphere1,
             sphere2,
             sphere3,
+            sphere4,
             floor
         );
         scene->models.push_back(model);

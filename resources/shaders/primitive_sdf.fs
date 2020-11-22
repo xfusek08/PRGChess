@@ -51,7 +51,7 @@ float sdBox(vec3 position, Primitive box);
 float sdCilinder(vec3 position, Primitive cilinder);
 
 // MAIN portal to different primitives
-float sdToScene(vec3 position) {
+float sdToScene(vec3 position) { // this is for one model iside one AABB
     float finalDist = MAX_DISTANCE;
     for (int i = 0; i < sceneSize; ++i) {
 
