@@ -32,20 +32,8 @@ class App : public Application
 
     bool init() {
 
-        glClearColor(0, 0, 0, 1);
-        glCreateVertexArrays(1, &vao);
-
-        prg = make_unique<Program>(
-            make_shared<Shader>(GL_VERTEX_SHADER, SHADER_VERTEX),
-            make_shared<Shader>(GL_FRAGMENT_SHADER, SHADER_PRIMITIVE_SDF),
-            make_shared<Shader>(GL_FRAGMENT_SHADER, SHADER_FRAGMENT)
-        );
-
-        if (!prg->getErrorMessage().empty()) {
-            cerr << "Error while creating a program: \n" << prg->getErrorMessage() << endl;
-            return false;
-        }
-
+        // performance setup
+        this->mainWindow->getPerformanceAnalyzer()->capFPS(24);
         this->mainWindow->getPerformanceAnalyzer()->perPeriodReport(1s, [=](IntervalPerformanceReport report) {
             cout << "fps: " << report.frames << "\n";
             cout << "Average frame duration: " << report.averageFrameTime.count() << " us\n";
@@ -53,23 +41,34 @@ class App : public Application
             cout << "shortest frame: " << report.minFrameTime.count() << " us\n";
         });
 
+        // gl program setup
+        glClearColor(0, 0, 0, 1);
+        glCreateVertexArrays(1, &vao);
+        prg = make_unique<Program>(
+            make_shared<Shader>(GL_VERTEX_SHADER, SHADER_VERTEX),
+            make_shared<Shader>(GL_FRAGMENT_SHADER, SHADER_PRIMITIVE_SDF),
+            make_shared<Shader>(GL_FRAGMENT_SHADER, SHADER_FRAGMENT)
+        );
+        if (!prg->getErrorMessage().empty()) {
+            cerr << "Error while creating a program: \n" << prg->getErrorMessage() << endl;
+            return false;
+        }
+
         // camera setup
         auto cam = make_shared<Camera>(glm::vec3(0, 1, 0));
         cam->setFov(glm::radians(60.0f));
         cam->setAspectRatio(float(mainWindow->getWidth()) / float(mainWindow->getHeight()));
         cam->setPosition(glm::vec3(0, 10, -10));
-        cam->setTargetPosition(glm::vec3(0, 0, 0));
+        cam->setTargetPosition(glm::vec3(0, 2, 0));
         orbitCamera = make_unique<OrbitCameraController>(cam);
         updateCamera();
 
-        // basic scene
-        prg->uniform("lightPosition", glm::vec3(1, 10, -5)); // in the future make light part of the scene
-
-        // basic creation of the scene with models harcoded
+        // scene setup
+        prg->uniform("lightPosition", glm::vec3(-25, 50, -25)); // in the future make light part of the scene
+        prg->uniform("ambientLight", glm::vec3(0.1, 0.1, 0.1)); // in the future make light part of the scene
         buildScene();
-
-        // loading scene to shader unifrom buffer
         updateScene();
+
         return true;
     }
 
@@ -104,16 +103,17 @@ class App : public Application
 
     // loads scene data to GPU
     void updateScene() {
+
         struct ShaderPrimitive {
+            glm::u32  type;
+            glm::u32  operation;
+            glm::f32  blending;
+            glm::f32  dummy;
             glm::mat4 transform;
             glm::vec4 data;
-            glm::u32  type;
-            float dummy1; // alligment
-            float dummy2;
-            float dummy3;
         };
 
-        // computeData
+        // computeData do it by visitor pattern
         vector<ShaderPrimitive> data;
         const vector<Primitive>& primitives = scene->models[0]->primitives;
         data.reserve(primitives.size());
@@ -122,6 +122,8 @@ class App : public Application
             shaderPrimitive.type      = primitive.type;
             shaderPrimitive.transform = primitive.transform.getTransform();
             shaderPrimitive.data      = primitive.data;
+            shaderPrimitive.operation = primitive.operation;
+            shaderPrimitive.blending  = primitive.blending;
             data.push_back(shaderPrimitive);
         }
 
@@ -133,18 +135,35 @@ class App : public Application
     }
 
     void buildScene() {
-
         scene = make_unique<Scene>();
 
-        // begin with one model
-        auto model = make_shared<Model>(Transform({ 0.0f, 2.0f, 0.0f }));
-        model->primitives = {
-            // a box in the center with dimensions 1 x 1 x 1
-            { PrimitiveType::Capsule, Transform({ 0.0f, -4.0f, 0.0f }, { 0.0, 45.0, 90.0 }), { 3.0f, 0.3f, 0.0f, 0.0f} },
-            { PrimitiveType::Sphere,  Transform({ 0.0f, -1.0f, 0.0f }), { 1.0f, 0.0f, 0.0f, 0.0f} },
-            { PrimitiveType::Box,     Transform({ 1.0f, -1.0f, 1.0f }, { 0.0, 45.0, 45.0 }), { 0.5f, 0.5f, 0.5f, 0.0f} },
-        };
+        // may the floor be another model in the future
+        Primitive floor = { PrimitiveType::Box };
+        floor.data = {8.0f, 1.0f, 8.0f, 0.2f};
+        floor.transform.translate({0, 1, 0});
 
+        Primitive sphere1 = { PrimitiveType::Sphere };
+        sphere1.data.x = 1.0;
+        sphere1.transform.translate({0, -1, 0});
+
+        Primitive sphere2 = { PrimitiveType::Sphere };
+        sphere2.data.x = 1.0;
+        sphere2.transform.translate({0, -2.4, 0});
+        sphere2.blending = 0.1;
+        sphere2.operation = PrimitiveOperation::Substract;
+
+        Primitive sphere3 = { PrimitiveType::Sphere };
+        sphere3.data.x = 3.0;
+        sphere3.transform.translate({2.7, -2.5, 0});
+        sphere3.blending = 0.1;
+        sphere3.operation = PrimitiveOperation::Intersect;
+
+        auto model = make_shared<Model>(
+            sphere1,
+            sphere2,
+            sphere3,
+            floor
+        );
         scene->models.push_back(model);
     }
 };

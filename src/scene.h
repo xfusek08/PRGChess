@@ -13,6 +13,12 @@ enum PrimitiveType {
     Cilinder = 4,
 };
 
+enum PrimitiveOperation {
+    Add       = 0,
+    Substract = 1,
+    Intersect = 2,
+};
+
 struct Transform {
     glm::vec3 position;
     glm::vec3 rotation;
@@ -27,7 +33,6 @@ struct Transform {
     glm::mat4 getTransform() const;
 
     // a syntax sugar
-
     inline void scale(float size)                    { this->size     += size; }
     inline void translate(glm::vec3 position)        { this->position += position; }
     inline void rotate(glm::vec3 rotation)           { this->rotation += rotation; }
@@ -36,20 +41,24 @@ struct Transform {
     inline void rotate(float x, float y, float z)    { rotate({x, y, z}); }
 };
 
-
 struct Primitive
 {
-    PrimitiveType type;
-    Transform transform; // transform matrix of the primitive
-    glm::vec4 data;      // variable data (4x float) such as dimensions and other coefficients
+    PrimitiveType      type;
+    Transform          transform  = Transform();
+    glm::vec4          data       = glm::vec4(0);
+    PrimitiveOperation operation  = PrimitiveOperation::Add;
+    float              blending   = 0.0f;
 };
 
 // make SoA instead of AoS ... or only transform to SoA when loading to GPU ...s
 struct Model
 {
-    Model(Transform transform = Transform()) : transform(transform) {}
+    Model(std::vector<Primitive> primitives) : primitives(primitives) {}
 
-    Transform transform;
+    template <typename... ARGS>
+    Model(ARGS... primitives) : primitives(std::vector<Primitive>({primitives...})) {}
+
+    Transform transform = Transform();
     std::vector<Primitive> primitives = {};
 };
 
