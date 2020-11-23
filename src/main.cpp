@@ -3,7 +3,7 @@
 #include <iostream>
 #include <array>
 
-#define DISABLE_LOGGING
+// #define DISABLE_LOGGING
 
 #include <RenderBase/rb.h>
 #include <RenderBase/tools/logging.h>
@@ -12,7 +12,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include <scene.h>
+#include <scene/Scene.h>
+
+#include <sceneGpuUtils.h>
 
 using namespace std;
 using namespace rb;
@@ -29,6 +31,10 @@ class App : public Application
     GLuint vao;
     unique_ptr<Program> prg;
     unique_ptr<UniformBuffer> sceneBuffer;
+
+    unique_ptr<UniformBuffer> primitiveBuffer;
+    unique_ptr<UniformBuffer> materialBuffer;
+    unique_ptr<UniformBuffer> modelBuffer;
 
     bool init() {
 
@@ -59,7 +65,7 @@ class App : public Application
         cam->setFov(glm::radians(60.0f));
         cam->setAspectRatio(float(mainWindow->getWidth()) / float(mainWindow->getHeight()));
         cam->setPosition(glm::vec3(0, 10, -10));
-        cam->setTargetPosition(glm::vec3(0, 2, 0));
+        cam->setTargetPosition(glm::vec3(0, 0, 0));
         orbitCamera = make_unique<OrbitCameraController>(cam);
         updateCamera();
 
@@ -102,75 +108,119 @@ class App : public Application
 
     // loads scene data to GPU
     void updateScene() {
+        auto shaderData = prepareShaderSceneData(*scene);
 
-        struct ShaderPrimitive {
-            glm::u32  type;
-            glm::u32  operation;
-            glm::f32  blending;
-            glm::f32  dummy;
-            glm::mat4 transform;
-            glm::vec4 data;
-        };
+        primitiveBuffer = make_unique<UniformBuffer>(shaderData->primitives);
+        materialBuffer  = make_unique<UniformBuffer>(shaderData->materials);
+        modelBuffer     = make_unique<UniformBuffer>(shaderData->models);
 
-        // computeData do it by visitor pattern
-        vector<ShaderPrimitive> data;
-        const vector<Primitive>& primitives = scene->models[0]->primitives;
-        data.reserve(primitives.size());
-        for (const Primitive& primitive : primitives) {
-            ShaderPrimitive shaderPrimitive;
-            shaderPrimitive.type      = primitive.type;
-            shaderPrimitive.transform = primitive.transform.getTransform();
-            shaderPrimitive.data      = primitive.data;
-            shaderPrimitive.operation = primitive.operation;
-            shaderPrimitive.blending  = primitive.blending;
-            data.push_back(shaderPrimitive);
-        }
-
-        // load to GPU
-        sceneBuffer = make_unique<UniformBuffer>();
-        sceneBuffer->load(data);
-        prg->uniform("sceneSize", glm::u32(data.size()));
-        prg->uniform("SceneBlock", *sceneBuffer);
+        prg->uniform("PrimitivesBlock", *primitiveBuffer);
+        prg->uniform("MaterialBlock", *materialBuffer, 1);
+        prg->uniform("ModelsBlock", *modelBuffer, 2);
+        prg->uniform("modelsTotal", glm::u32(shaderData->models.size()));
     }
 
     void buildScene() {
         scene = make_unique<Scene>();
 
-        // may the floor be another model in the future
-        Primitive floor = { PrimitiveType::Box };
-        floor.data = {5.0f, 1.0f, 5.0f, 0.4f};
-        floor.transform.translate({0, 1.5, 0});
+        // Register materials
 
-        Primitive sphere1 = { PrimitiveType::Sphere };
-        sphere1.data.x = 1.0;
-        sphere1.transform.translate({0, -1, 0});
+        auto whiteClay = Material();
+        whiteClay.color = {1.0f, 1.0f, 0.8f};
+        whiteClay.shininess = 500.0f;
+        scene->materials["whiteClay"] = whiteClay;
 
-        Primitive sphere2 = { PrimitiveType::Sphere };
-        sphere2.data.x = 1.0;
-        sphere2.transform.translate({0, -2.4, 0});
-        sphere2.blending = 0.1;
-        sphere2.operation = PrimitiveOperation::Substract;
+        auto redClay = Material();
+        redClay.color = {0.7f, 0.2f, 0.2f};
+        redClay.shininess = 5.0f;
+        scene->materials["redClay"] = redClay;
 
-        Primitive sphere3 = { PrimitiveType::Sphere };
-        sphere3.data.x = 3.0;
-        sphere3.transform.translate({2.7, -2.5, 1.7});
-        sphere3.blending = 0.1;
-        sphere3.operation = PrimitiveOperation::Substract;
+        auto blueClay = Material();
+        blueClay.color = {0.2f, 0.3f, 0.8f};
+        blueClay.shininess = 100.0f;
+        scene->materials["blueClay"] = blueClay;
 
-        Primitive sphere4 = { PrimitiveType::Sphere };
-        sphere4.data.x = 3.9;
-        sphere4.transform.translate({2.7, -2.5, 1.7});
-        sphere4.blending = 0.1;
-        sphere4.operation = PrimitiveOperation::Intersect;
+        // Register geometries
 
-        auto model = make_shared<Model>(
-            sphere1,
-            sphere2,
-            sphere3,
-            sphere4,
-            floor
-        );
-        scene->models.push_back(model);
+        {   // floor geometry
+            Primitive box = { PrimitiveType::Box };
+            box.data = {7.0f, 1.0f, 7.0f, 0.03f};
+            Primitive edge1 = { PrimitiveType::Cilinder };
+            edge1.transform.translate({ 0.0f, 0.5f, 7.0f });
+            edge1.transform.rotate({ 0.0f, 0.0f, 90.0f });
+            edge1.data.x   = 0.2f;
+            edge1.data.y   = 8.0f;
+            edge1.blending = 0.03f;
+            edge1.operation = PrimitiveOperation::Substract;
+            scene->geometries["floor"] = ModelGeometry(box, edge1);
+        }
+
+        {   // Figure
+            Primitive body = { PrimitiveType::Cilinder };
+            body.transform.translate({ 0.0f, 1.0f, 0.0f });
+            body.data.x = 0.35f;
+            body.data.y = 1.0f;
+
+            Primitive head = { PrimitiveType::Sphere };
+            head.transform.translate({ 0.0f, 2.4f, 0.0f });
+            head.data.x = 0.8f;
+            head.blending = 0.1f;
+
+            Primitive base = { PrimitiveType::Torus };
+            base.data.x = 0.9f;
+            base.data.y = 0.5f;
+            base.blending = 0.8f;
+
+            Primitive flatBottom = { PrimitiveType::Box };
+            flatBottom.transform.translate({ 0.0f, -0.5f, 0.0f });
+            flatBottom.data = {1.5f, 0.2f, 1.5f, 0.0f};
+            flatBottom.operation = PrimitiveOperation::Substract;
+
+            scene->geometries["figure"] = ModelGeometry(body, head, base, flatBottom);
+        }
+
+        // { // reference geometry
+        //     scene->geometries["reference"] = ModelGeometry(
+        //         Primitive{ PrimitiveType::Sphere,   { {0.0f, 0.0f, 0.0f } }, { 0.5f, 0.0f, 0.0f, 0.0f } }
+        //     );
+        // }
+
+        // { // test geometry
+        //     scene->geometries["test"] = ModelGeometry(
+        //         Primitive{ PrimitiveType::Cilinder, { {0.0f, 1.0f, 0.0f } }, { 0.4f, 1.0f, 0.0f, 0.0f } },
+        //         Primitive{ PrimitiveType::Torus,    { {0.0f, 0.0f, 0.0f } }, { 0.7f, 0.4f, 0.0f, 0.0f } }
+        //     );
+        //     scene->geometries["test"].primitives[1].blending = 0.7;
+        // }
+
+        // Register models
+
+        Model floor = {
+            Transform({0.0f, -1.0f, 0.0f}),
+            "floor",
+            "whiteClay"
+        };
+        scene->models.push_back(floor);
+
+        Model figure = {
+            Transform({-2.0f, 3.0f, 1.0f}, {0.0f, 0.0f, 0.0f}),
+            "figure",
+            "redClay"
+        };
+
+        scene->models.push_back(figure);
+
+        Model blueFig = {
+            Transform({1.0f, 3.0f, -4.0f}, { 0.0f, 0.0f, 0.0f }),
+            "figure",
+            "blueClay"
+        };
+        scene->models.push_back(blueFig);
+
+        // Model test      = { Transform(), "test", "redClay" };
+        // Model reference = { Transform({ 2.0f, 0.0f, 0.0f }), "reference", "blueClay" };
+        // scene->models.push_back(test);
+        // scene->models.push_back(reference);
     }
 };
 

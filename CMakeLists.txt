@@ -13,7 +13,16 @@ include(vendor/RenderBase/cmakeUtils/LoadSharedFiles.cmake)
 
 set(SOURCES
     src/main.cpp
-    src/scene.h src/scene.cpp
+    src/sceneGpuUtils.h src/sceneGpuUtils.cpp
+    src/AABB.h src/AABB.cpp
+
+    # scene
+    src/scene/Transform.h src/scene/Transform.cpp
+    src/scene/Primitive.h src/scene/Primitive.cpp
+    src/scene/ModelGeometry.h
+    src/scene/Material.h
+    src/scene/Model.h
+    src/scene/Scene.h
 )
 
 set(COMPILE_DEFINITIONS
