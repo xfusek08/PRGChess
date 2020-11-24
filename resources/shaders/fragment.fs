@@ -49,7 +49,7 @@ struct Model {
     uint geometryId; // offset to primitive buffer
     uint materialId;
     uint primitiveCount;
-    // float dummy
+    float scale;
 };
 
 // uniform and buffers
@@ -106,6 +106,8 @@ vec3 getNormal(vec3 point, uint modelId) {
  * @param out uint modelId  model id which bounding box is hitted
  * @param out vec3 bbOrigin intersection entry point to the bounding box
  * @param out vec3 bbEnd    intersection exit point to the bounding box
+ *
+ *  This function was inspired by: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
  */
 bool queryModelBB(vec3 rayOrigin, vec3 rayDirection, out uint modelId, out vec3 bbOrigin, out vec3 bbEnd) {
     // find model bb intersextion
@@ -127,13 +129,21 @@ bool queryModelBB(vec3 rayOrigin, vec3 rayDirection, out uint modelId, out vec3 
 
         if (tminNew < tmaxNew && tminNew < tmin && tmaxNew > 0) {
             modelId  = i;
-            tmin     = max(tminNew, 0.0); // if ray starts inside then do not redturn it bacwards to entery point
+            tmin     = max(tminNew, 0.0); // if ray starts inside, then do not reset to entery point
             tmax     = tmaxNew;
             bbOrigin = rayOrigin + rayDirection * tmin;
             bbEnd    = rayOrigin + rayDirection * tmax;
         }
     }
     return tmin < MAX_DISTANCE;
+}
+
+bool modelsIntersects(uint model1Id, uint model2Id) {
+    Model model1 = models[model1Id];
+    Model model2 = models[model2Id];
+    bvec4 a = lessThanEqual(model1.bbMin, model2.bbMax);
+    bvec4 b = greaterThanEqual(model2.bbMax, model2.bbMin);
+    return all(a) && all(b);
 }
 
 float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
@@ -146,25 +156,49 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
 
     // get intersected bounding box and its model
     while (queryModelBB(actPosition, direction, modelId, bbOrigin, bbEnd)) {
+
+        // debugColor = vec3(1,0,0);
+        // useDebugColor = true;
+
         distanceMarchedTotal += length(bbOrigin - actPosition);
 
-        // ray march inside bb
-        actPosition = bbOrigin;
-        float maxBBDistance = length(bbEnd - bbOrigin);
+        // ray march inside the BB
+        actPosition                = bbOrigin;
+        float maxBBDistance        = length(bbEnd - bbOrigin);
         float distanceMarchedLocal = 0;
-
         for (int step = 0; step < MAX_STEPS; ++step) {
 
-            // get distance to model
+            // check distance to current model
             float actDist = sdModel(actPosition, modelId);
-
-            // return if hit
             if (actDist <= HIT_DISTANCE) {
                 return distanceMarchedTotal;
             }
 
+            // check distances to all intersected models
+            uint closestModelId = modelId;
+            for (int i = 0; i < modelsTotal; ++i) {
+                if (i != modelId && modelsIntersects(modelId, i)) {
+
+                    // get  distance to intersected model
+                    float distToOther = sdModel(actPosition, i);
+
+                    // return that model if hit
+                    if (distToOther <= HIT_DISTANCE) {
+                        modelId = i;
+                        return distanceMarchedTotal;
+                    }
+
+                    // if model is closer than already found closest model - make new closest
+                    if (distToOther < actDist) {
+                        actDist = distToOther;
+                        closestModelId = i;
+                    }
+                }
+            }
+            modelId = closestModelId;
+
             // make step
-            actPosition     += actDist * direction;
+            actPosition          += actDist * direction;
             distanceMarchedLocal += actDist;
             distanceMarchedTotal += actDist;
 
@@ -173,7 +207,7 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
                 return distanceMarchedTotal;
             }
 
-            // if ray exited bounding box - find another bb behind this one by repeating the queryModelBB
+            // if ray exited BB - find BB behind this one by repeating the queryModelBB
             if (distanceMarchedLocal > maxBBDistance) {
                 break;
             }

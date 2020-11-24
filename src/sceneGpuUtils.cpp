@@ -53,11 +53,12 @@ unique_ptr<ShaderSceneData> prepareShaderSceneData(const Scene& scene) {
         auto bb = aabb.geometryBB(actModel.geometryIdent);
         auto shaderModel           = ShaderModel();
         shaderModel.transform      = actModel.transform.getTransform();
-        shaderModel.bbMin          = glm::vec4(bb.min, 1.0);
-        shaderModel.bbMax          = glm::vec4(bb.max, 1.0);
+        shaderModel.bbMin          = glm::vec4(bb.min, 1.0) * actModel.transform.size;
+        shaderModel.bbMax          = glm::vec4(bb.max, 1.0) * actModel.transform.size;
         shaderModel.geometryId     = get<0>(mgIdentMap[actModel.geometryIdent]);
         shaderModel.primitiveCount = get<1>(mgIdentMap[actModel.geometryIdent]);
         shaderModel.materialId     = maIdentMap[actModel.materialIdent];
+        shaderModel.scale          = actModel.transform.size;
         data->models.push_back(shaderModel);
     }
 

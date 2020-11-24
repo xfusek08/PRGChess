@@ -13,7 +13,9 @@ Transform::Transform(glm::vec3 position, glm::vec3 rotation, float size) :
 {}
 
 glm::mat4 Transform::getTransform() const {
-    auto m = glm::scale(glm::mat4(1), glm::vec3(size));
+    auto m = glm::mat4(1);
+    // m = glm::inverse(glm::scale(glm::mat4(1), glm::vec3(size))); // scaling invalidates distance field - we need to scale primitives geometry
+    // m = glm::scale(glm::mat4(1), glm::vec3(size)); // scaling invalidates distance field - we need to scale primitives geometry
     m = m * getRotationMatrix();
     m = glm::translate(m, -position);
     return m;

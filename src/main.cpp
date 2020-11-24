@@ -155,47 +155,47 @@ class App : public Application
             scene->geometries["floor"] = ModelGeometry(box, edge1);
         }
 
-        // {   // Figure
-        //     Primitive body = { PrimitiveType::Cilinder };
-        //     body.transform.translate({ 0.0f, 1.0f, 0.0f });
-        //     body.data.x = 0.35f;
-        //     body.data.y = 1.0f;
+        {   // Figure
+            Primitive body = { PrimitiveType::Cilinder };
+            body.transform.translate({ 0.0f, 1.0f, 0.0f });
+            body.data.x = 0.35f;
+            body.data.y = 1.0f;
 
-        //     Primitive head = { PrimitiveType::Sphere };
-        //     head.transform.translate({ 0.0f, 2.4f, 0.0f });
-        //     head.data.x = 0.8f;
-        //     head.blending = 0.1f;
+            Primitive head = { PrimitiveType::Sphere };
+            head.transform.translate({ 0.0f, 2.4f, 0.0f });
+            head.data.x = 0.8f;
+            head.blending = 0.1f;
 
-        //     Primitive base = { PrimitiveType::Torus };
-        //     base.data.x = 0.9f;
-        //     base.data.y = 0.5f;
-        //     base.blending = 0.8f;
+            Primitive base = { PrimitiveType::Torus };
+            base.data.x = 0.9f;
+            base.data.y = 0.5f;
+            base.blending = 0.8f;
 
-        //     Primitive flatBottom = { PrimitiveType::Box };
-        //     flatBottom.transform.translate({ 0.0f, -0.5f, 0.0f });
-        //     flatBottom.data = {1.5f, 0.2f, 1.5f, 0.0f};
-        //     flatBottom.operation = PrimitiveOperation::Substract;
+            Primitive flatBottom = { PrimitiveType::Box };
+            flatBottom.transform.translate({ 0.0f, -0.5f, 0.0f });
+            flatBottom.data = {1.5f, 0.2f, 1.5f, 0.0f};
+            flatBottom.operation = PrimitiveOperation::Substract;
 
-        //     scene->geometries["figure"] = ModelGeometry(body, head, base, flatBottom);
+            scene->geometries["figure"] = ModelGeometry(body, head, base, flatBottom);
+        }
+
+        // { // reference geometry
+        //     scene->geometries["reference"] = ModelGeometry(
+        //         Primitive{ PrimitiveType::Sphere,   { {0.0f, 0.0f, 0.0f } }, { 0.5f, 0.0f, 0.0f, 0.0f } }
+        //     );
         // }
 
-        { // reference geometry
-            scene->geometries["reference"] = ModelGeometry(
-                Primitive{ PrimitiveType::Sphere,   { {0.0f, 0.0f, 0.0f } }, { 0.5f, 0.0f, 0.0f, 0.0f } }
-            );
-        }
-
-        { // test geometry
-            scene->geometries["test"] = ModelGeometry(
-                Primitive{ PrimitiveType::Cilinder, { {0.0f, 0.0f, 0.0f } }, { 0.2f, 2.0f, 0.0f, 0.0f } }
-                , Primitive{ PrimitiveType::Capsule, { {0.0f, 0.7f, -0.8f }, {30.0f, 0.0f, 0.0f} }, { 0.2f, 2.5f, 0.0f, 0.0f } }
-                , Primitive{ PrimitiveType::Capsule, { {0.0f, 0.7f, 0.8f }, {-30.0f, 0.0f, 0.0f} }, { 0.2f, 2.5f, 0.0f, 0.0f } }
-                , Primitive{ PrimitiveType::Cilinder, { {0.0f, 2.0f, 0.0f }, {90.0f, 0.0f, 0.0f} }, { 0.2f, 2.0f, 0.0f, 0.0f } }
-            );
-            scene->geometries["test"].primitives[1].blending = 0.25;
-            scene->geometries["test"].primitives[2].blending = 0.25;
-            scene->geometries["test"].primitives[3].blending = 0.4;
-        }
+        // { // test geometry
+        //     scene->geometries["test"] = ModelGeometry(
+        //         Primitive{ PrimitiveType::Cilinder, { {0.0f, 0.0f, 0.0f } }, { 0.2f, 2.0f, 0.0f, 0.0f } }
+        //         , Primitive{ PrimitiveType::Capsule, { {0.0f, 0.7f, -0.8f }, {30.0f, 0.0f, 0.0f} }, { 0.2f, 2.5f, 0.0f, 0.0f } }
+        //         , Primitive{ PrimitiveType::Capsule, { {0.0f, 0.7f, 0.8f }, {-30.0f, 0.0f, 0.0f} }, { 0.2f, 2.5f, 0.0f, 0.0f } }
+        //         , Primitive{ PrimitiveType::Cilinder, { {0.0f, 2.0f, 0.0f }, {90.0f, 0.0f, 0.0f} }, { 0.2f, 2.0f, 0.0f, 0.0f } }
+        //     );
+        //     scene->geometries["test"].primitives[1].blending = 0.25;
+        //     scene->geometries["test"].primitives[2].blending = 0.25;
+        //     scene->geometries["test"].primitives[3].blending = 0.4;
+        // }
 
         // Register models
 
@@ -206,25 +206,25 @@ class App : public Application
         };
         scene->models.push_back(floor);
 
-        // Model figure = {
-        //     Transform({-2.0f, 3.0f, 1.0f}, {0.0f, 0.0f, 0.0f}),
-        //     "figure",
-        //     "redClay"
-        // };
+        Model figure = {
+            Transform({0.0f, 2.0f, 0.0f}, {0.0f, 0.0f, 0.0f}, 1.0f),
+            "figure",
+            "redClay"
+        };
 
-        // scene->models.push_back(figure);
+        scene->models.push_back(figure);
 
-        // Model blueFig = {
-        //     Transform({1.0f, 3.0f, -4.0f}, { 0.0f, 0.0f, 0.0f }),
-        //     "figure",
-        //     "blueClay"
-        // };
-        // scene->models.push_back(blueFig);
+        Model blueFig = {
+            Transform({-1.0f, 4.0f, -1.0f}, { 0.0f, 0.0f, 0.0f }, 0.5f),
+            "figure",
+            "blueClay"
+        };
+        scene->models.push_back(blueFig);
 
-        Model test      = { Transform({ 0.0f, 2.0f, 0.0f }), "test", "redClay" };
-        Model reference = { Transform({ 0.5f, 1.0f, 1.5f }), "reference", "blueClay" };
-        scene->models.push_back(test);
-        scene->models.push_back(reference);
+        // Model test      = { Transform({ 0.0f, 2.0f, 0.0f }), "test", "redClay" };
+        // Model reference = { Transform({ 0.5f, 1.0f, 1.5f }), "reference", "blueClay" };
+        // scene->models.push_back(test);
+        // scene->models.push_back(reference);
     }
 };
 

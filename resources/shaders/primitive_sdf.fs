@@ -47,7 +47,7 @@ struct Model {
     uint geometryId; // offset to primitive buffer
     uint materialId;
     uint primitiveCount;
-    // float dummy
+    float scale;
 };
 
 // uniform and buffers
@@ -107,8 +107,9 @@ float sdModel(vec3 position, uint modelId) {
 
     for (int i = 0; i < model.primitiveCount; ++i) {
 
-        Primitive primitive   = primitives[i + model.geometryId];
-        float distToPrimitive = sdPrimitive(p, primitive);
+        Primitive primitive = primitives[i + model.geometryId];
+        primitive.blending  *= model.scale;
+        float distToPrimitive = sdPrimitive(p / model.scale, primitive) * model.scale;
 
         switch (primitive.operation) {
             case OPERATION_ADD:       finalDist = smoothMin(distToPrimitive, finalDist, primitive.blending); break;
@@ -120,6 +121,9 @@ float sdModel(vec3 position, uint modelId) {
     // optimize with dist to models bounding box
 
     // data.y *= 0.5;
+    // model.bbMax *= model.scale;
+    // model.bbMin *= model.scale;
+
     Primitive bb = {
         TYPE_BOX,
         OPERATION_ADD,
@@ -127,7 +131,11 @@ float sdModel(vec3 position, uint modelId) {
         model.transform,
         (model.bbMax - model.bbMin) * 0.5
     };
-    finalDist = min(sdBoundingBox(position - (model.bbMin.xyz * 0.5 + model.bbMax.xyz * 0.5), bb, 0.01), finalDist);
+    finalDist = min(sdBoundingBox(
+        (position - (model.bbMin.xyz * 0.5 + model.bbMax.xyz * 0.5)),
+        bb,
+        0.01
+    ), finalDist);
     // finalDist = min(sdBox(position, bb), finalDist);
 
 

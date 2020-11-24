@@ -29,7 +29,7 @@ struct ShaderModel {
     glm::u32  geometryId;
     glm::u32  materialId;
     glm::u32  primitiveCount;
-    glm::f32  dummy2;
+    glm::f32  scale;
 };
 
 struct ShaderSceneData {
