@@ -127,7 +127,7 @@ bool queryModelBB(vec3 rayOrigin, vec3 rayDirection, out uint modelId, out vec3 
 
         if (tminNew < tmaxNew && tminNew < tmin && tmaxNew > 0) {
             modelId  = i;
-            tmin     = tminNew;
+            tmin     = max(tminNew, 0.0); // if ray starts inside then do not redturn it bacwards to entery point
             tmax     = tmaxNew;
             bbOrigin = rayOrigin + rayDirection * tmin;
             bbEnd    = rayOrigin + rayDirection * tmax;
