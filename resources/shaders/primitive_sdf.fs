@@ -127,7 +127,7 @@ float sdModel(vec3 position, uint modelId) {
         model.transform,
         (model.bbMax - model.bbMin) * 0.5
     };
-    finalDist = min(sdBoundingBox(position - (model.bbMin.xyz * 0.5 + model.bbMax.xyz * 0.5), bb, 0.05), finalDist);
+    finalDist = min(sdBoundingBox(position - (model.bbMin.xyz * 0.5 + model.bbMax.xyz * 0.5), bb, 0.01), finalDist);
     // finalDist = min(sdBox(position, bb), finalDist);
 
 
