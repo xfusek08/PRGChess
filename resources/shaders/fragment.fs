@@ -25,6 +25,7 @@
 #define OPERATION_INTERSECT  2
 
 #define TEXTURE_CHESSBOARD 0
+#define INVALID_TEXTURE    100
 
 struct Primitive {
     uint type;
@@ -77,8 +78,28 @@ uniform vec3 leftRayDistorsion;
 
 uniform vec3  lightPosition;
 
-vec3 debugColor     = vec3(1,1,1);
+vec3 debugColor     = vec3(1,0,0);
 bool useDebugColor = false;
+
+
+Material sampleProcTexture(uint textureId, vec3 point) {
+    Material mat;
+    if (textureId == TEXTURE_CHESSBOARD) {
+        vec2 dim = mod(floor(point.xz), 2.0);
+        if (dim.x == dim.y && all(lessThanEqual(abs(point.xz), vec2(4)))) {
+            // useDebugColor = true;
+            // debugColor = vec3(mod(floor(point.xz), 2.0), 0);
+            mat.color         = vec4(0.1, 0.1, 0.1, 1);
+            mat.specularColor = vec4(1.1, 1.0, 0.99, 1);
+            mat.shininess     = 100;
+        } else {
+            mat.color         = vec4(1.0, 0.95, 0.85, 1);
+            mat.specularColor = vec4(1.1, 1.0, 0.99, 1);
+            mat.shininess     = 500;
+        }
+    }
+    return mat;
+}
 
 // prototypes implemented in primitive_sdf
 float sdToScene(vec3 position, out uint modelId);
@@ -234,22 +255,25 @@ vec3 getLight(vec3 point, uint modelId) {
         dotRV *= 0.1;
     }
 
-    // material properties
-    Material material   = materials[models[modelId].materialId];
-    vec3  materialcolor = material.color.xyz;
-    vec3  specularColor = material.specularColor.xyz;
-    float shininess     = material.shininess;
+    // get material propertios
+    Material material        = materials[models[modelId].materialId];
+    vec3  materialcolor      = material.color.xyz;
+    vec3  specularColor      = material.specularColor.xyz;
+    float shininess          = material.shininess;
+    if (material.textureId != INVALID_TEXTURE) {
+        Material textureMaterial = sampleProcTexture(material.textureId, point);
+        materialcolor      = mix(materialcolor, textureMaterial.color.xyz,         material.textureMix);
+        specularColor      = mix(specularColor, textureMaterial.specularColor.xyz, material.textureMix);
+        shininess          = mix(shininess,     textureMaterial.shininess,         material.textureMix);
+    }
 
-    // light properties
-    vec3 lightIntensity = vec3(0.6, 0.6, 0.6);
-    vec3 ambientLight   = materialcolor * vec3(0.3, 0.3, 0.3);
+    // compute light properties
+    vec3 lightIntensity = vec3(0.65, 0.65, 0.65);
+    vec3 ambientLight   = materialcolor * vec3(0.6, 0.6, 0.6);
     vec3 diffuseLight   = materialcolor * dotNL;
     vec3 specularLight  = specularColor * pow(dotRV, shininess);
 
-    // if (shininess > 100) {
-
-    // }
-
+    // combine light preperties
     return lightIntensity * (ambientLight + diffuseLight + specularLight);
 }
 
