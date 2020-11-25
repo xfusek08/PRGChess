@@ -1,0 +1,99 @@
+{
+    "materials": {
+        "redClay": {
+            "color": [ 0.7, 0.2, 0.2 ],
+            "specularColor": [ 1.5, 1.0, 1.0 ],
+            "shininess": 10
+        },
+        "chessBoard": {
+            "color":         [ 0.925, 0.870, 0.752 ],
+            "specularColor": [ 1.1, 1.0, 0.99 ],
+            "shininess":     500,
+            "textureType":   0,
+            "textureMix":    0.8
+        },
+        "blackClay": {
+            "color": [ 0.2, 0.2, 0.2 ],
+            "specularColor": [ 1.1, 1.0, 0.99 ],
+            "shininess": 500
+        },
+        "blueClay": {
+            "color": [ 0.4, 0.5, 1.0 ],
+            "specularColor": [ 1.0, 1.0, 1.5 ],
+            "shininess": 70
+        }
+    },
+    "geometries": {
+        "referenceGeometry": [
+            {
+                "type": "sphere"
+            }
+        ],
+        "pawnGeometry": [
+            { "type":   "Capsule", "position": [  0, 0.35,  0.0 ], "width" : 0.1, "height": 1.5},
+            { "type":   "sphere",  "position": [  0, 0.5,  0.0 ], "diameter" : 0.4, "blending": 0.008 },
+            { "type":   "torus",   "position": [  0, 0.16,  0.0 ], "diameterX" : 0.25, "diameterY" : 0.01, "blending": 0.05 },
+            { "type":   "torus",   "position": [  0, -0.35,  0.0 ], "diameterX" : 0.3, "diameterY" : 0.27, "blending": 0.30 },
+            { "type":   "box",     "position": [  0, -0.55,  0.0 ], "height" : 0.3, "width" : 0.7, "depth" : 0.7, "operation": "sub"}
+        ],
+        "floorGeometry": [
+            {
+                "type":   "box",
+                "width" : 8.4,
+                "height": 0.5,
+                "depth":  8.4,
+                "radius": 0.03
+            },
+            { "type": "cilinder", "position": [  0, 0.25,  4.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25,  3.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25,  2.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25,  1.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25,  0.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25, -1.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25, -2.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25, -3.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25, -4.0 ], "rotation": [  0, 0, 90.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+
+            { "type": "cilinder", "position": [  4, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  3, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  2, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  1, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [ -1, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [ -2, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [ -3, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [ -4, 0.25,  0.0 ], "rotation": [ 90, 0, 0.0 ], "width": 0.05, "height": 10, "operation": "sub", "blending": 0.01 },
+
+            { "type": "cilinder", "position": [  0.0, 0.25,  4.3 ], "rotation": [  0, 0, 90.0 ], "width": 0.3, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  0.0, 0.25, -4.3 ], "rotation": [  0, 0, 90.0 ], "width": 0.3, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [  4.3, 0.25,  0.0 ], "rotation": [ 90, 0,  0.0 ], "width": 0.3, "height": 10, "operation": "sub", "blending": 0.01 },
+            { "type": "cilinder", "position": [ -4.3, 0.25,  0.0 ], "rotation": [ 90, 0,  0.0 ], "width": 0.3, "height": 10, "operation": "sub", "blending": 0.01 }
+        ]
+    },
+    "models": [
+        {
+            "position": [ 0, -0.75, 0 ],
+            "geometry": "floorGeometry",
+            "material": "chessBoard"
+        },
+        { "position": [  2.5, 0,  3.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0,  2.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0,  1.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0,  0.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0,  0.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0, -0.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0, -1.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0, -2.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+        { "position": [  2.5, 0, -3.5 ], "geometry": "pawnGeometry", "material": "redClay" },
+
+        { "position": [ -2.5, 0,  3.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0,  2.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0,  1.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0,  0.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0,  0.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0, -0.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0, -1.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0, -2.5 ], "geometry": "pawnGeometry", "material": "blueClay" },
+        { "position": [ -2.5, 0, -3.5 ], "geometry": "pawnGeometry", "material": "blueClay" }
+    ]
+}

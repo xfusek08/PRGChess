@@ -4,7 +4,7 @@
 // COMMON HEADER - move to separate file in the future
 ///////////////////////////////////////////////////////////////////////////
 
-#define MAX_STEPS    100
+#define MAX_STEPS    50
 #define MAX_DISTANCE 100.0
 #define HIT_DISTANCE 0.01
 
@@ -24,6 +24,8 @@
 #define OPERATION_SUBSTRACT  1
 #define OPERATION_INTERSECT  2
 
+#define TEXTURE_CHESSBOARD 0
+
 struct Primitive {
     uint type;
     uint operation;
@@ -37,8 +39,8 @@ struct Material {
     vec4  color;
     vec4  specularColor;
     float shininess;
-    // dummy float
-    // dummy float
+    uint  textureId; // id of procedural texture
+    float textureMix;
     // dummy float
 };
 
@@ -222,17 +224,14 @@ vec3 getLight(vec3 point, uint modelId) {
     vec3 normalVector     = getNormal(point, modelId);
     vec3 reflectionVector = normalize(reflect(-toLightVector, normalVector));
 
-    float dotNL;
-    float dotRV;
+    float dotNL = max(dot(normalVector, toLightVector), 0.0);
+    float dotRV = max(dot(reflectionVector, viewVector), 0.0);
 
     uint shadowModel;
     float distToLight = rayMarch(point + normalVector * HIT_DISTANCE * 2, toLightVector, shadowModel);
     if (shadowModel != modelId && distToLight < length(lightPosition - point)) {
-        dotNL = 0;
-        dotRV = 0;
-    } else {
-        dotNL = max(dot(normalVector, toLightVector), 0.0);
-        dotRV = max(dot(reflectionVector, viewVector), 0.0);
+        dotNL *= 0.1;
+        dotRV *= 0.1;
     }
 
     // material properties
@@ -246,6 +245,10 @@ vec3 getLight(vec3 point, uint modelId) {
     vec3 ambientLight   = materialcolor * vec3(0.3, 0.3, 0.3);
     vec3 diffuseLight   = materialcolor * dotNL;
     vec3 specularLight  = specularColor * pow(dotRV, shininess);
+
+    // if (shininess > 100) {
+
+    // }
 
     return lightIntensity * (ambientLight + diffuseLight + specularLight);
 }

@@ -4,7 +4,7 @@
 // COMMON HEADER - move to separate file in the future
 ///////////////////////////////////////////////////////////////////////////
 
-#define MAX_STEPS    100
+#define MAX_STEPS    50
 #define MAX_DISTANCE 100.0
 #define HIT_DISTANCE 0.01
 
@@ -22,6 +22,8 @@
 #define OPERATION_SUBSTRACT  1
 #define OPERATION_INTERSECT  2
 
+#define TEXTURE_CHESSBOARD 0
+
 struct Primitive {
     uint type;
     uint operation;
@@ -35,8 +37,8 @@ struct Material {
     vec4  color;
     vec4  specularColor;
     float shininess;
-    // dummy float
-    // dummy float
+    uint  textureId; // id of procedural texture
+    float textureMix;
     // dummy float
 };
 
@@ -72,7 +74,6 @@ float smoothMin(float dist1, float dist2, float koeficient) {
 }
 
 float smoothMax(float dist1, float dist2, float koeficient) {
-    return max(dist1, dist2);
     float h = clamp( 0.5 - 0.5 * (dist1 - dist2) / koeficient, 0.0, 1.0 );
     return mix(dist1, dist2, h ) + koeficient * h * (1.0-h);
 }
@@ -118,26 +119,25 @@ float sdModel(vec3 position, uint modelId) {
         };
     }
 
-    // optimize with dist to models bounding box
+    // // optimize with dist to models bounding box
 
-    // data.y *= 0.5;
-    // model.bbMax *= model.scale;
-    // model.bbMin *= model.scale;
+    // // data.y *= 0.5;
+    // // model.bbMax *= model.scale;
+    // // model.bbMin *= model.scale;
 
-    Primitive bb = {
-        TYPE_BOX,
-        OPERATION_ADD,
-        0,
-        model.transform,
-        (model.bbMax - model.bbMin) * 0.5
-    };
-    finalDist = min(sdBoundingBox(
-        (position - (model.bbMin.xyz * 0.5 + model.bbMax.xyz * 0.5)),
-        bb,
-        0.01
-    ), finalDist);
-    // finalDist = min(sdBox(position, bb), finalDist);
-
+    // Primitive bb = {
+    //     TYPE_BOX,
+    //     OPERATION_ADD,
+    //     0,
+    //     model.transform,
+    //     (model.bbMax - model.bbMin) * 0.5
+    // };
+    // finalDist = min(sdBoundingBox(
+    //     (position - (model.bbMin.xyz * 0.5 + model.bbMax.xyz * 0.5)),
+    //     bb,
+    //     0.01
+    // ), finalDist);
+    // // finalDist = min(sdBox(position, bb), finalDist);
 
     return finalDist;
 }

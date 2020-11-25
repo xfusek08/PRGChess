@@ -7,7 +7,7 @@
 class Model
 {
     public:
-        Transform transform       = Transform();
+        Transform   transform     = Transform();
         std::string geometryIdent = "";
         std::string materialIdent = "";
 };

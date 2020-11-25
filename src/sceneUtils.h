@@ -17,8 +17,8 @@ struct ShaderMaterial {
     glm::vec4 color;
     glm::vec4 specularColor;
     glm::f32  shininess;
-    glm::f32  dummy1;
-    glm::f32  dummy2;
+    glm::u32  textureId; // id of procedural texture
+    glm::f32  textureMix;
     glm::f32  dummy3;
 };
 
@@ -38,4 +38,6 @@ struct ShaderSceneData {
     std::vector<ShaderMaterial>  materials;
 };
 
-std::unique_ptr<ShaderSceneData> prepareShaderSceneData(const Scene& scene);
+ShaderSceneData prepareShaderSceneData(const Scene& scene);
+
+std::unique_ptr<Scene> buildSceneFromJson(std::string jsonFile);
