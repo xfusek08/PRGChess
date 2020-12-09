@@ -10,6 +10,8 @@ enum PrimitiveType {
     Torus     = 2,
     Box       = 3,
     Cilinder  = 4,
+    Cone      = 5,
+    RoundCone = 6,
     ptInvalid = 100,
 };
 
@@ -21,12 +23,15 @@ enum PrimitiveOperation {
 };
 
 static const std::unordered_map<std::string, PrimitiveType> primitiveTypeDict = {
-    {"sphere",   PrimitiveType::Sphere},
-    {"capsule",  PrimitiveType::Capsule},
-    {"torus",    PrimitiveType::Torus},
-    {"box",      PrimitiveType::Box},
-    {"cilinder", PrimitiveType::Cilinder},
-    {"ciln",     PrimitiveType::Cilinder},
+    {"sphere",    PrimitiveType::Sphere},
+    {"capsule",   PrimitiveType::Capsule},
+    {"torus",     PrimitiveType::Torus},
+    {"box",       PrimitiveType::Box},
+    {"cilinder",  PrimitiveType::Cilinder},
+    {"ciln",      PrimitiveType::Cilinder},
+    {"cone",      PrimitiveType::Cone},
+    {"roundcone", PrimitiveType::RoundCone},
+    {"rcone",     PrimitiveType::RoundCone},
 };
 
 

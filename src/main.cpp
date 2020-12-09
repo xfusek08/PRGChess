@@ -40,7 +40,7 @@ class App : public Application
     bool init() {
 
         // performance setup
-        this->mainWindow->getPerformanceAnalyzer()->capFPS(10);
+        this->mainWindow->getPerformanceAnalyzer()->capFPS(24);
         this->mainWindow->getPerformanceAnalyzer()->perPeriodReport(1s, [=](IntervalPerformanceReport report) {
             cout << "fps: " << report.frames << "\n";
             cout << "Average frame duration: " << report.averageFrameTime.count() << " us\n";

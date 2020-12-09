@@ -4,9 +4,11 @@
 // COMMON HEADER - move to separate file in the future
 ///////////////////////////////////////////////////////////////////////////
 
-#define MAX_STEPS    50
-#define MAX_DISTANCE 100.0
-#define HIT_DISTANCE 0.01
+#define MAX_STEPS           25
+#define MAX_DISTANCE        100.0
+#define HIT_DISTANCE_MAX    0.4
+#define HIT_DISTANCE_MIN    0.003
+#define HIT_DISTANCE_FACTOR 0.001
 
 #define MAX_PRIMITIVES 100
 #define MAX_MODELS     10
@@ -19,6 +21,7 @@
 #define TYPE_TORUS    2
 #define TYPE_BOX      3
 #define TYPE_CILINDER 4
+#define TYPE_CONE     5
 
 #define OPERATION_ADD        0
 #define OPERATION_SUBSTRACT  1
@@ -101,6 +104,10 @@ Material sampleProcTexture(uint textureId, vec3 point) {
     return mat;
 }
 
+float getHitDistance(vec3 point) {
+    return clamp(length(point - cameraPosition) * HIT_DISTANCE_FACTOR, HIT_DISTANCE_MIN, HIT_DISTANCE_MAX);
+}
+
 // prototypes implemented in primitive_sdf
 float sdToScene(vec3 position, out uint modelId);
 float sdToScene(vec3 position);
@@ -108,7 +115,7 @@ float sdModel(vec3 position, uint modelId);
 
 vec3 getNormal(vec3 point, uint modelId) {
     float d = sdModel(point, modelId);
-    vec2 e = vec2(HIT_DISTANCE, 0);
+    vec2 e = vec2(getHitDistance(point), 0);
     vec3 n = d - vec3(
         sdModel(point - e.xyy, modelId),
         sdModel(point - e.yxy, modelId),
@@ -180,8 +187,8 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
     // get intersected bounding box and its model
     while (queryModelBB(actPosition, direction, modelId, bbOrigin, bbEnd)) {
 
-        // debugColor = vec3(1,0,0);
-        // useDebugColor = true;
+        debugColor = vec3(1,0,0);
+        useDebugColor = true;
 
         distanceMarchedTotal += length(bbOrigin - actPosition);
 
@@ -191,9 +198,13 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
         float distanceMarchedLocal = 0;
         for (int step = 0; step < MAX_STEPS; ++step) {
 
+            float hitDistance = getHitDistance(actPosition);
+            // debugColor = vec3(0, hitDistance * 10, 0);
+            // useDebugColor = true;
+
             // check distance to current model
             float actDist = sdModel(actPosition, modelId);
-            if (actDist <= HIT_DISTANCE) {
+            if (actDist <= hitDistance) {
                 return distanceMarchedTotal;
             }
 
@@ -206,7 +217,7 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
                     float distToOther = sdModel(actPosition, i);
 
                     // return that model if hit
-                    if (distToOther <= HIT_DISTANCE) {
+                    if (distToOther <= hitDistance) {
                         modelId = i;
                         return distanceMarchedTotal;
                     }
@@ -249,7 +260,7 @@ vec3 getLight(vec3 point, uint modelId) {
     float dotRV = max(dot(reflectionVector, viewVector), 0.0);
 
     uint shadowModel;
-    float distToLight = rayMarch(point + normalVector * HIT_DISTANCE * 2, toLightVector, shadowModel);
+    float distToLight = rayMarch(point + normalVector * getHitDistance(point) * 2, toLightVector, shadowModel);
     if (shadowModel != modelId && distToLight < length(lightPosition - point)) {
         dotNL *= 0.1;
         dotRV *= 0.1;

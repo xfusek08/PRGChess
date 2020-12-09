@@ -111,9 +111,10 @@ unique_ptr<Scene> buildSceneFromJson(string jsonFile) {
                     case PrimitiveType::Cilinder:
                         primitive.data = { 1.0f, 1.0f, 0.0f, 0.0f };
 
-                        SET_PROPERTY_FLOAT(primitive, width,  data.x)
-                        SET_PROPERTY_FLOAT(primitive, height, data.y, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, radius, data.x)
+                        SET_PROPERTY_FLOAT(primitive, width,   data.x)
+                        SET_PROPERTY_FLOAT(primitive, height,  data.y, primitive.data.y *= 0.5f;)
+                        SET_PROPERTY_FLOAT(primitive, radius,  data.x)
+                        SET_PROPERTY_FLOAT(primitive, rounded, data.z)
                         break;
 
                     case PrimitiveType::Capsule:
@@ -129,8 +130,33 @@ unique_ptr<Scene> buildSceneFromJson(string jsonFile) {
 
                         SET_PROPERTY_FLOAT(primitive, diameterX, data.x, primitive.data.x *= 0.5f;)
                         SET_PROPERTY_FLOAT(primitive, diameterY, data.y, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, radiusX, data.x)
-                        SET_PROPERTY_FLOAT(primitive, radiusY, data.y)
+                        SET_PROPERTY_FLOAT(primitive, radiusX,   data.x)
+                        SET_PROPERTY_FLOAT(primitive, radiusY,   data.y)
+                        break;
+
+                    case PrimitiveType::Cone:
+                        primitive.data = { 0.5f, 0.25f, 0.5f, 0.0f };
+
+                        SET_PROPERTY_FLOAT(primitive, height,         data.z, primitive.data.z *= 0.5f;)
+                        SET_PROPERTY_FLOAT(primitive, rounded,        data.w)
+
+                        SET_PROPERTY_FLOAT(primitive, diameterBottom, data.x, primitive.data.x *= 0.5f;)
+                        SET_PROPERTY_FLOAT(primitive, diameterTop,    data.y, primitive.data.y *= 0.5f;)
+
+                        SET_PROPERTY_FLOAT(primitive, radiusBottom,   data.x)
+                        SET_PROPERTY_FLOAT(primitive, radiusTop,      data.y)
+                        break;
+
+                    case PrimitiveType::RoundCone:
+                        primitive.data = { 0.5f, 0.25f, 0.5f, 0.0f };
+
+                        SET_PROPERTY_FLOAT(primitive, height,         data.z, primitive.data.z *= 0.5f;)
+
+                        SET_PROPERTY_FLOAT(primitive, diameterBottom, data.x, primitive.data.x *= 0.5f;)
+                        SET_PROPERTY_FLOAT(primitive, diameterTop,    data.y, primitive.data.y *= 0.5f;)
+
+                        SET_PROPERTY_FLOAT(primitive, radiusBottom,   data.x)
+                        SET_PROPERTY_FLOAT(primitive, radiusTop,      data.y)
                         break;
 
                     default:

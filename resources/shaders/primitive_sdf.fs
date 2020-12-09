@@ -12,11 +12,13 @@
 #define MAX_MODELS     10
 #define MAX_MATERIALS  10
 
-#define TYPE_SPHERE   0
-#define TYPE_CAPSULE  1
-#define TYPE_TORUS    2
-#define TYPE_BOX      3
-#define TYPE_CILINDER 4
+#define TYPE_SPHERE     0
+#define TYPE_CAPSULE    1
+#define TYPE_TORUS      2
+#define TYPE_BOX        3
+#define TYPE_CILINDER   4
+#define TYPE_CONE       5
+#define TYPE_ROUND_CONE 6
 
 #define OPERATION_ADD        0
 #define OPERATION_SUBSTRACT  1
@@ -80,12 +82,14 @@ float smoothMax(float dist1, float dist2, float koeficient) {
 
 // SDF definitions
 float sdModel(vec3 position, uint modelId);
-float sdPrimitive(vec3 position, Primitive prmiitive);
+float sdPrimitive(vec3 position, Primitive primitive);
 float sdSphere(vec3 position, Primitive sphere);
 float sdCapsule(vec3 position, Primitive capsule);
 float sdTorus(vec3 position, Primitive torus);
 float sdBox(vec3 position, Primitive box);
 float sdCilinder(vec3 position, Primitive cilinder);
+float sdCone(vec3 position, Primitive cone);
+float roundCone(vec3 position, Primitive roundCone);
 float sdBoundingBox(vec3 position, Primitive bBox, float thicness);
 
 float sdToScene(vec3 position, out uint modelId) { // this is for one model iside one AABB
@@ -147,13 +151,15 @@ float sdToScene(vec3 position) {
     return sdToScene(position, dummy);
 }
 
-float sdPrimitive(vec3 position, Primitive prmiitive) {
-    switch (prmiitive.type) {
-        case TYPE_SPHERE:   return sdSphere(position, prmiitive);
-        case TYPE_CAPSULE:  return sdCapsule(position, prmiitive);
-        case TYPE_TORUS:    return sdTorus(position, prmiitive);
-        case TYPE_BOX:      return sdBox(position, prmiitive);
-        case TYPE_CILINDER: return sdCilinder(position, prmiitive);
+float sdPrimitive(vec3 position, Primitive primitive) {
+    switch (primitive.type) {
+        case TYPE_SPHERE:     return sdSphere(position, primitive);
+        case TYPE_CAPSULE:    return sdCapsule(position, primitive);
+        case TYPE_TORUS:      return sdTorus(position, primitive);
+        case TYPE_BOX:        return sdBox(position, primitive);
+        case TYPE_CILINDER:   return sdCilinder(position, primitive);
+        case TYPE_CONE:       return sdCone(position, primitive);
+        case TYPE_ROUND_CONE: return roundCone(position, primitive);
     }
     return MAX_DISTANCE;
 }
@@ -190,10 +196,44 @@ float sdBox(vec3 position, Primitive box) {
 
 float sdCilinder(vec3 position, Primitive cilinder) {
     vec3 p = TRANSFORM_POS(position, cilinder);
-    float w = cilinder.data.x;
-    float h = cilinder.data.y;
+    float w = cilinder.data.x - cilinder.data.z;
+    float h = cilinder.data.y - cilinder.data.z;
     vec2  d = abs(vec2(length(p.xz), p.y)) - vec2(w, h);
-    return min(max(d.x, d.y), 0.0) + length(max(d, 0.0));
+    return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)) - cilinder.data.z;
+}
+
+float sdCone(vec3 position, Primitive cone) {
+    float r1 = cone.data.x - cone.data.w;
+    float r2 = cone.data.y - cone.data.w;
+    float h  = cone.data.z - cone.data.w;
+    vec3  p  = TRANSFORM_POS(position, cone);
+
+    vec2 q = vec2( length(p.xz), p.y );
+    vec2 k1 = vec2(r2,h);
+    vec2 k2 = vec2(r2-r1,2.0*h);
+    vec2 ca = vec2(q.x-min(q.x,(q.y<0.0)?r1:r2), abs(q.y)-h);
+    vec2 cb = q - k1 + k2*clamp( dot(k1-q,k2)/dot(k2.xy, k2.xy), 0.0, 1.0 );
+    float s = (cb.x<0.0 && ca.y<0.0) ? -1.0 : 1.0;
+    return s*sqrt( min(dot(ca.xy, ca.xy),dot(cb.xy, cb.xy)) ) - cone.data.w;
+}
+
+float roundCone(vec3 position, Primitive roundCone) {
+    float r1 = roundCone.data.x;
+    float r2 = roundCone.data.y;
+    float h  = roundCone.data.z;
+    vec3  p  = TRANSFORM_POS(position, roundCone);
+    p.y += h * 0.5;
+
+    vec2 q = vec2( length(p.xz), p.y );
+
+    float b = (r1-r2)/h;
+    float a = sqrt(1.0-b*b);
+    float k = dot(q,vec2(-b,a));
+
+    if( k < 0.0 ) return length(q) - r1;
+    if( k > a*h ) return length(q-vec2(0.0,h)) - r2;
+
+    return dot(q, vec2(a,b) ) - r1;
 }
 
 float sdBoundingBox(vec3 position, Primitive bBox, float thicness)
