@@ -6,9 +6,9 @@
 
 #define MAX_STEPS           25
 #define MAX_DISTANCE        100.0
-#define HIT_DISTANCE_MAX    0.4
+#define HIT_DISTANCE_MAX    0.5
 #define HIT_DISTANCE_MIN    0.003
-#define HIT_DISTANCE_FACTOR 0.001
+#define HIT_DISTANCE_FACTOR 0.0001
 
 #define MAX_PRIMITIVES 100
 #define MAX_MODELS     10
@@ -105,7 +105,8 @@ Material sampleProcTexture(uint textureId, vec3 point) {
 }
 
 float getHitDistance(vec3 point) {
-    return clamp(length(point - cameraPosition) * HIT_DISTANCE_FACTOR, HIT_DISTANCE_MIN, HIT_DISTANCE_MAX);
+    float d = length(point - cameraPosition);
+    return clamp(d * d * HIT_DISTANCE_FACTOR, HIT_DISTANCE_MIN, HIT_DISTANCE_MAX);
 }
 
 // prototypes implemented in primitive_sdf
@@ -145,7 +146,7 @@ bool queryModelBB(vec3 rayOrigin, vec3 rayDirection, out uint modelId, out vec3 
     float tmax = 0.0;
 
     for (int i = 0; i < modelsTotal; ++i) {
-        vec3 ro = (models[i].transform * vec4(rayOrigin, 1)).xyz;
+        vec3 ro = (vec4(rayOrigin, 1)).xyz;
         vec3 inverseRayDir = 1.0 / rayDirection;
 
         vec3 tminv0 = (models[i].bbMin.xyz - ro) * inverseRayDir;
@@ -187,8 +188,8 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
     // get intersected bounding box and its model
     while (queryModelBB(actPosition, direction, modelId, bbOrigin, bbEnd)) {
 
-        debugColor = vec3(1,0,0);
-        useDebugColor = true;
+        // debugColor = vec3(length(bbOrigin - bbEnd) / length(models[modelId].bbMin.xyz - models[modelId].bbMax.xyz), 0, 0);
+        // useDebugColor = true;
 
         distanceMarchedTotal += length(bbOrigin - actPosition);
 
@@ -205,6 +206,9 @@ float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
             // check distance to current model
             float actDist = sdModel(actPosition, modelId);
             if (actDist <= hitDistance) {
+                // debugColor = vec3(hitDistance * 10, 0, 0);
+                // useDebugColor = true;
+
                 return distanceMarchedTotal;
             }
 

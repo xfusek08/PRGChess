@@ -7,10 +7,7 @@
 #include <nlohmann/json.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <RenderBase/tools/logging.h>
-
-#define EXPAND(x) x
-#define GET_MACRO_3(_1, _2, _3, NAME, ...) NAME
-#define GET_MACRO_4(_1, _2, _3, _4, NAME, ...) NAME
+#include <RenderBase/tools/macroUtils.h>
 
 #define IF_SET(propName)                                                   if (value.contains(#propName))
 #define _4_SET_PROPERTY(type, target, propName, targetProperty, operation) IF_SET(propName) { target.targetProperty = value[#propName].get<type>(); operation }
@@ -83,85 +80,22 @@ unique_ptr<Scene> buildSceneFromJson(string jsonFile) {
         // per primitive
         for (auto& value : primitives) {
             IF_SET(type) {
-                auto primitive = Primitive();
+                PrimitiveType pType = Primitive::typeFromString(value["type"].get<string>());
+                auto primitive = Primitive::createByType(pType);
+                if (primitive->getType() == PrimitiveType::ptInvalid) {
+                    continue;
+                }
 
                 // common properties
-                IF_SET(type)      primitive.type      = Primitive::typeFromString(value["type"].get<string>());
-                IF_SET(operation) primitive.operation = Primitive::operationFromString(value["operation"].get<string>());
-                SET_PROPERTY_TRANSFORM(primitive)
-                SET_PROPERTY_FLOAT(primitive, blending)
-                SET_PROPERTY_VEC4(primitive, data)
+                IF_SET(operation) primitive->operation = Primitive::operationFromString(value["operation"].get<string>());
+                SET_PROPERTY_TRANSFORM((*primitive))
+                SET_PROPERTY_FLOAT((*primitive), blending)
+                SET_PROPERTY_VEC4((*primitive), data)
 
-                // type specifics
-                switch (primitive.type)  {
-                    case PrimitiveType::Sphere:
-                        primitive.data = { 0.5f, 0.0f, 0.0f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, diameter, data.x, primitive.data.x *= 0.5f; )
-                        SET_PROPERTY_FLOAT(primitive, radius,   data.x)
-                        break;
-                    case PrimitiveType::Box:
-                        primitive.data = { 0.5f, 0.5f, 0.5f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, width,  data.x, primitive.data.x *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, height, data.y, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, depth,  data.z, primitive.data.z *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, radius, data.w)
-                        break;
-                    case PrimitiveType::Cilinder:
-                        primitive.data = { 1.0f, 1.0f, 0.0f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, width,   data.x)
-                        SET_PROPERTY_FLOAT(primitive, height,  data.y, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, radius,  data.x)
-                        SET_PROPERTY_FLOAT(primitive, rounded, data.z)
-                        break;
-
-                    case PrimitiveType::Capsule:
-                        primitive.data = { 1.0f, 1.0f, 0.0f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, width,  data.x, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, height, data.y, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, radius, data.x)
-                        break;
-
-                    case PrimitiveType::Torus:
-                        primitive.data = { 1.0f, 1.0f, 0.0f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, diameterX, data.x, primitive.data.x *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, diameterY, data.y, primitive.data.y *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, radiusX,   data.x)
-                        SET_PROPERTY_FLOAT(primitive, radiusY,   data.y)
-                        break;
-
-                    case PrimitiveType::Cone:
-                        primitive.data = { 0.5f, 0.25f, 0.5f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, height,         data.z, primitive.data.z *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, rounded,        data.w)
-
-                        SET_PROPERTY_FLOAT(primitive, diameterBottom, data.x, primitive.data.x *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, diameterTop,    data.y, primitive.data.y *= 0.5f;)
-
-                        SET_PROPERTY_FLOAT(primitive, radiusBottom,   data.x)
-                        SET_PROPERTY_FLOAT(primitive, radiusTop,      data.y)
-                        break;
-
-                    case PrimitiveType::RoundCone:
-                        primitive.data = { 0.5f, 0.25f, 0.5f, 0.0f };
-
-                        SET_PROPERTY_FLOAT(primitive, height,         data.z, primitive.data.z *= 0.5f;)
-
-                        SET_PROPERTY_FLOAT(primitive, diameterBottom, data.x, primitive.data.x *= 0.5f;)
-                        SET_PROPERTY_FLOAT(primitive, diameterTop,    data.y, primitive.data.y *= 0.5f;)
-
-                        SET_PROPERTY_FLOAT(primitive, radiusBottom,   data.x)
-                        SET_PROPERTY_FLOAT(primitive, radiusTop,      data.y)
-                        break;
-
-                    default:
-                        LOG_DEBUG("Invalid primitive type.");
-                        continue;
+                for (auto& [name, property] : value.items()) {
+                    if (property.is_number()) {
+                        primitive->setDataPropertyByName(name, property.get<float>());
+                    }
                 }
 
                 geometry.primitives.push_back(primitive);
@@ -201,11 +135,11 @@ ShaderSceneData prepareShaderSceneData(const Scene& scene) {
         for (const auto& actPrimitive : actGeometry.second.primitives) {
             ++count;
             auto shaderPrimitive      = ShaderPrimitive();
-            shaderPrimitive.type      = actPrimitive.type;
-            shaderPrimitive.transform = actPrimitive.transform.getTransform();
-            shaderPrimitive.data      = actPrimitive.data;
-            shaderPrimitive.operation = actPrimitive.operation;
-            shaderPrimitive.blending  = actPrimitive.blending;
+            shaderPrimitive.type      = actPrimitive->getType();
+            shaderPrimitive.transform = actPrimitive->transform.getTransform();
+            shaderPrimitive.data      = actPrimitive->data;
+            shaderPrimitive.operation = actPrimitive->operation;
+            shaderPrimitive.blending  = actPrimitive->blending;
             data.primitives.push_back(shaderPrimitive);
         }
         mgIdentMap[actGeometry.first] = { actId, count };
@@ -230,11 +164,11 @@ ShaderSceneData prepareShaderSceneData(const Scene& scene) {
     // load models to data
     for (const auto& actModel : scene.models) {
         auto aabb = AABBHierarchy(scene);
-        auto bb = aabb.geometryBB(actModel.geometryIdent);
+        auto bb = aabb.geometryBB(actModel.geometryIdent).transform(actModel.transform);
         auto shaderModel           = ShaderModel();
         shaderModel.transform      = actModel.transform.getTransform();
-        shaderModel.bbMin          = glm::vec4(bb.min, 1.0) * actModel.transform.size;
-        shaderModel.bbMax          = glm::vec4(bb.max, 1.0) * actModel.transform.size;
+        shaderModel.bbMin          = glm::vec4(bb.min, 1.0);
+        shaderModel.bbMax          = glm::vec4(bb.max, 1.0);
         shaderModel.geometryId     = get<0>(mgIdentMap[actModel.geometryIdent]);
         shaderModel.primitiveCount = get<1>(mgIdentMap[actModel.geometryIdent]);
         shaderModel.materialId     = maIdentMap[actModel.materialIdent];
