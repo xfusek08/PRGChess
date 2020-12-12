@@ -113,6 +113,7 @@ struct ModelIntersection {
 int modelIntersected = 0;
 ModelIntersection intersectedModels[MAX_MODELS];
 
+// This function was inspired by: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
 bool intersectBB(int nodeIndex, vec3 rayOrigin, vec3 direction, out float rayBegin, out float rayEnd) {
     if (nodeIndex >= 0) {
         vec3 ro = (vec4(rayOrigin, 1)).xyz;
@@ -147,9 +148,13 @@ bool computeModelIntersections(vec3 rayOrigin, vec3 rayDirection) {
     float rBegin;
     float rEnd;
 
+
     if (intersectBB(nodeIndex, rayOrigin, rayDirection, rBegin, rEnd)) {
+        // useDebugColor = true;
+        // debugColor = vec3(0,0,0);
         // left most search
         while (nodeIndex >= 0 && modelIntersected < MAX_MODELS) {
+            debugColor += vec3(0,0.1,0);
             BVHNode node = bvh[nodeIndex];
 
             if (node.model >= 0) {
