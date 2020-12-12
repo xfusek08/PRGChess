@@ -4,24 +4,26 @@
 // COMMON HEADER - move to separate file in the future
 ///////////////////////////////////////////////////////////////////////////
 
-#define MAX_STEPS           25
+#define MAX_STEPS           30
 #define MAX_DISTANCE        100.0
 #define HIT_DISTANCE_MAX    0.5
 #define HIT_DISTANCE_MIN    0.003
 #define HIT_DISTANCE_FACTOR 0.0001
 
+#define MAX_BVH_SIZE   100 // given the formula of 2*l - 1
 #define MAX_PRIMITIVES 100
-#define MAX_MODELS     10
+#define MAX_MODELS     50
 #define MAX_MATERIALS  10
 
 // enums
 
-#define TYPE_SPHERE   0
-#define TYPE_CAPSULE  1
-#define TYPE_TORUS    2
-#define TYPE_BOX      3
-#define TYPE_CILINDER 4
-#define TYPE_CONE     5
+#define TYPE_SPHERE     0
+#define TYPE_CAPSULE    1
+#define TYPE_TORUS      2
+#define TYPE_BOX        3
+#define TYPE_CILINDER   4
+#define TYPE_CONE       5
+#define TYPE_ROUND_CONE 6
 
 #define OPERATION_ADD        0
 #define OPERATION_SUBSTRACT  1
@@ -50,12 +52,19 @@ struct Material {
 
 struct Model {
     mat4 transform;
-    vec4 bbMin;
-    vec4 bbMax;
     uint geometryId; // offset to primitive buffer
     uint materialId;
     uint primitiveCount;
     float scale;
+};
+
+struct BVHNode {
+    vec4 bbMin;
+    vec4 bbMax;
+    int left;
+    int right;
+    int parent;
+    int model;
 };
 
 // uniform and buffers
@@ -63,8 +72,7 @@ struct Model {
 layout (std140) uniform PrimitivesBlock { Primitive primitives[MAX_PRIMITIVES]; };
 layout (std140) uniform MaterialBlock { Material materials[MAX_MODELS]; };
 layout (std140) uniform ModelsBlock { Model models[MAX_MODELS]; };
-
-uniform uint modelsTotal;
+layout (std140) uniform BVHBlock { BVHNode bvh[MAX_BVH_SIZE]; };
 
 ///////////////////////////////////////////////////////////////////////////
 // END OF COMMON HEADER
@@ -81,17 +89,159 @@ uniform vec3 leftRayDistorsion;
 
 uniform vec3  lightPosition;
 
-vec3 debugColor     = vec3(1,0,0);
+vec3 debugColor    = vec3(1,0,0);
 bool useDebugColor = false;
 
+///////////////////////////////////////////////////////////////////////////////
+// IMPORTED FUNCTIONS
+///////////////////////////////////////////////////////////////////////////////
+
+float sdModel(vec3 position, int modelId);
+
+///////////////////////////////////////////////////////////////////////////////
+// RAY MARCHING
+///////////////////////////////////////////////////////////////////////////////
+
+float getHitDistance(vec3 point) {
+    float d = length(point - cameraPosition);
+    return clamp(d * d * HIT_DISTANCE_FACTOR, HIT_DISTANCE_MIN, HIT_DISTANCE_MAX);
+}
+
+float intersectBB(int nodeIndex, vec3 rayOrigin, vec3 direction, out float toEnd) {
+    if (nodeIndex >= 0) {
+        vec3 ro = (vec4(rayOrigin, 1)).xyz;
+        vec3 inverseRayDir = 1.0 / direction;
+
+        vec3 tminv0 = (bvh[nodeIndex].bbMin.xyz - ro) * inverseRayDir;
+        vec3 tmaxv0 = (bvh[nodeIndex].bbMax.xyz - ro) * inverseRayDir;
+
+        vec3 tminv = min(tminv0, tmaxv0);
+        vec3 tmaxv = max(tminv0, tmaxv0);
+
+        float tmin = max(tminv.x, max(tminv.y, tminv.z));
+        float tmax = min(tmaxv.x, min(tmaxv.y, tmaxv.z));
+
+        if (tmin < tmax && tmax > 0) {
+            toEnd = tmax;
+            return tmin;
+        }
+    }
+    return MAX_DISTANCE;
+}
+
+int closestIntersectedChild(int nodeIndex, vec3 rayOrigin, vec3 direction, out float toBegin, out float toEnd) {
+    float parentBegin = intersectBB(nodeIndex, rayOrigin, direction, toEnd);
+    if (parentBegin >= MAX_DISTANCE) {
+        return -1;
+    } else if (bvh[nodeIndex].model >= 0) {
+        toBegin = parentBegin;
+        return nodeIndex;
+    }
+
+    BVHNode parent = bvh[nodeIndex];
+
+    float lEnd, rEnd;
+    float lBegin = intersectBB(parent.left, rayOrigin, direction, lEnd);
+    float rBegin = intersectBB(parent.right, rayOrigin, direction, rEnd);
+    bool lValid = lBegin < MAX_DISTANCE;
+    bool rValid = rBegin < MAX_DISTANCE;
+
+    if (!lValid && !rValid) {
+        toBegin = toEnd + getHitDistance(rayOrigin) * 1.1;
+        toEnd = MAX_DISTANCE;
+        return 0;
+    }
+
+    if (abs(lBegin) <= abs(rBegin)) {
+        toEnd = lEnd;
+        toBegin = lBegin;
+        return parent.left;
+    }
+
+    toEnd = rEnd;
+    toBegin = rBegin;
+    return parent.right;
+}
+
+float rayMarchModel(vec3 originPoint, vec3 direction, int modelId, float maxDistance, out float minDistance) {
+    float distanceMarched = 0;
+    minDistance = maxDistance;
+    for (int step = 0; step < MAX_STEPS; ++step) {
+        vec3 position = originPoint + distanceMarched * direction;
+        float dist = sdModel(position, modelId);
+        minDistance = min(dist, minDistance);
+        distanceMarched += dist;
+        if (dist <= getHitDistance(position) || distanceMarched >= maxDistance) {
+            break;
+        }
+    }
+    return min(distanceMarched, maxDistance);
+}
+
+float rayMarch(vec3 originPoint, vec3 direction, out int modelId) {
+    float distanceMarchedTotal = 0;
+    vec3  actPosition = originPoint;
+    int   nodeIndex = 0;
+    float toBegin = MAX_DISTANCE;
+    float toEnd = MAX_DISTANCE;
+
+    // useDebugColor = true;
+    // debugColor = vec3(0);
+
+    while ((nodeIndex = closestIntersectedChild(nodeIndex, actPosition, direction, toBegin, toEnd)) >= 0) {
+        // debugColor += vec3(0.2, 0, 0);
+        if (toEnd >= MAX_DISTANCE) {
+            distanceMarchedTotal += toBegin;
+            actPosition += direction * toBegin;
+            nodeIndex = 0;
+        } else
+        if (bvh[nodeIndex].model >= 0) {
+            BVHNode node = bvh[nodeIndex];
+
+            distanceMarchedTotal += toBegin;
+            actPosition += direction * toBegin;
+            float intersectionDistance = toEnd - toBegin;
+
+            float minDistance = MAX_DISTANCE; // dummy for now
+            float dist = rayMarchModel(actPosition, direction, node.model, intersectionDistance, minDistance);
+
+            distanceMarchedTotal += dist;
+            if (dist < intersectionDistance) { // this is hit
+                modelId = node.model;
+                return distanceMarchedTotal;
+            } else {
+                // move act position behind bb and query tree again
+                actPosition += direction * (dist + getHitDistance(actPosition));
+                nodeIndex = 0;
+            }
+        }
+    }
+    return MAX_DISTANCE;
+
+
+
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// MATERIALS AND LIGTHING
+///////////////////////////////////////////////////////////////////////////////
+
+vec3 getNormal(vec3 point, int modelId) {
+    float d = sdModel(point, modelId);
+    vec2 e = vec2(getHitDistance(point), 0);
+    vec3 n = d - vec3(
+        sdModel(point - e.xyy, modelId),
+        sdModel(point - e.yxy, modelId),
+        sdModel(point - e.yyx, modelId)
+    );
+    return normalize(n);
+}
 
 Material sampleProcTexture(uint textureId, vec3 point) {
     Material mat;
     if (textureId == TEXTURE_CHESSBOARD) {
         vec2 dim = mod(floor(point.xz), 2.0);
         if (dim.x == dim.y && all(lessThanEqual(abs(point.xz), vec2(4)))) {
-            // useDebugColor = true;
-            // debugColor = vec3(mod(floor(point.xz), 2.0), 0);
             mat.color         = vec4(0.1, 0.1, 0.1, 1);
             mat.specularColor = vec4(1.1, 1.0, 0.99, 1);
             mat.shininess     = 100;
@@ -104,157 +254,7 @@ Material sampleProcTexture(uint textureId, vec3 point) {
     return mat;
 }
 
-float getHitDistance(vec3 point) {
-    float d = length(point - cameraPosition);
-    return clamp(d * d * HIT_DISTANCE_FACTOR, HIT_DISTANCE_MIN, HIT_DISTANCE_MAX);
-}
-
-// prototypes implemented in primitive_sdf
-float sdToScene(vec3 position, out uint modelId);
-float sdToScene(vec3 position);
-float sdModel(vec3 position, uint modelId);
-
-vec3 getNormal(vec3 point, uint modelId) {
-    float d = sdModel(point, modelId);
-    vec2 e = vec2(getHitDistance(point), 0);
-    vec3 n = d - vec3(
-        sdModel(point - e.xyy, modelId),
-        sdModel(point - e.yxy, modelId),
-        sdModel(point - e.yyx, modelId)
-    );
-    return normalize(n);
-}
-
-/**
- * This function returns closest bounding box which the ray intersects
- * Important properties:
- *   1. ray begins outside a BB - returned is first BB in diretion of the ray
- *      (no BB behind the ray is considered)
- *   2. ray begins inside a BB - returned is the BB in which we started such as:
- *      - bbOrigin is rayOrigin
- *      - bbEnd is where ray exits the BB
- *
- * @param out uint modelId  model id which bounding box is hitted
- * @param out vec3 bbOrigin intersection entry point to the bounding box
- * @param out vec3 bbEnd    intersection exit point to the bounding box
- *
- *  This function was inspired by: https://medium.com/@bromanz/another-view-on-the-classic-ray-aabb-intersection-algorithm-for-bvh-traversal-41125138b525
- */
-bool queryModelBB(vec3 rayOrigin, vec3 rayDirection, out uint modelId, out vec3 bbOrigin, out vec3 bbEnd) {
-    // find model bb intersextion
-    float tmin = MAX_DISTANCE;
-    float tmax = 0.0;
-
-    for (int i = 0; i < modelsTotal; ++i) {
-        vec3 ro = (vec4(rayOrigin, 1)).xyz;
-        vec3 inverseRayDir = 1.0 / rayDirection;
-
-        vec3 tminv0 = (models[i].bbMin.xyz - ro) * inverseRayDir;
-        vec3 tmaxv0 = (models[i].bbMax.xyz - ro) * inverseRayDir;
-
-        vec3 tminv = min(tminv0, tmaxv0);
-        vec3 tmaxv = max(tminv0, tmaxv0);
-
-        float tminNew = max(tminv.x, max(tminv.y, tminv.z));
-        float tmaxNew = min(tmaxv.x, min(tmaxv.y, tmaxv.z));
-
-        if (tminNew < tmaxNew && tminNew < tmin && tmaxNew > 0) {
-            modelId  = i;
-            tmin     = max(tminNew, 0.0); // if ray starts inside, then do not reset to entery point
-            tmax     = tmaxNew;
-            bbOrigin = rayOrigin + rayDirection * tmin;
-            bbEnd    = rayOrigin + rayDirection * tmax;
-        }
-    }
-    return tmin < MAX_DISTANCE;
-}
-
-bool modelsIntersects(uint model1Id, uint model2Id) {
-    Model model1 = models[model1Id];
-    Model model2 = models[model2Id];
-    bvec4 a = lessThanEqual(model1.bbMin, model2.bbMax);
-    bvec4 b = greaterThanEqual(model2.bbMax, model2.bbMin);
-    return all(a) && all(b);
-}
-
-float rayMarch(vec3 originPoint, vec3 direction, out uint modelId) {
-    float distanceMarchedTotal = 0;
-    vec3 actPosition      = originPoint;
-
-    // act processed model
-    vec3 bbOrigin;
-    vec3 bbEnd;
-
-    // get intersected bounding box and its model
-    while (queryModelBB(actPosition, direction, modelId, bbOrigin, bbEnd)) {
-
-        // debugColor = vec3(length(bbOrigin - bbEnd) / length(models[modelId].bbMin.xyz - models[modelId].bbMax.xyz), 0, 0);
-        // useDebugColor = true;
-
-        distanceMarchedTotal += length(bbOrigin - actPosition);
-
-        // ray march inside the BB
-        actPosition                = bbOrigin;
-        float maxBBDistance        = length(bbEnd - bbOrigin);
-        float distanceMarchedLocal = 0;
-        for (int step = 0; step < MAX_STEPS; ++step) {
-
-            float hitDistance = getHitDistance(actPosition);
-            // debugColor = vec3(0, hitDistance * 10, 0);
-            // useDebugColor = true;
-
-            // check distance to current model
-            float actDist = sdModel(actPosition, modelId);
-            if (actDist <= hitDistance) {
-                // debugColor = vec3(hitDistance * 10, 0, 0);
-                // useDebugColor = true;
-
-                return distanceMarchedTotal;
-            }
-
-            // check distances to all intersected models
-            uint closestModelId = modelId;
-            for (int i = 0; i < modelsTotal; ++i) {
-                if (i != modelId && modelsIntersects(modelId, i)) {
-
-                    // get  distance to intersected model
-                    float distToOther = sdModel(actPosition, i);
-
-                    // return that model if hit
-                    if (distToOther <= hitDistance) {
-                        modelId = i;
-                        return distanceMarchedTotal;
-                    }
-
-                    // if model is closer than already found closest model - make new closest
-                    if (distToOther < actDist) {
-                        actDist = distToOther;
-                        closestModelId = i;
-                    }
-                }
-            }
-            modelId = closestModelId;
-
-            // make step
-            actPosition          += actDist * direction;
-            distanceMarchedLocal += actDist;
-            distanceMarchedTotal += actDist;
-
-            // if reached max distance - END
-            if (distanceMarchedTotal >= MAX_DISTANCE) {
-                return distanceMarchedTotal;
-            }
-
-            // if ray exited BB - find BB behind this one by repeating the queryModelBB
-            if (distanceMarchedLocal > maxBBDistance) {
-                break;
-            }
-        }
-    }
-    return MAX_DISTANCE;
-}
-
-vec3 getLight(vec3 point, uint modelId) {
+vec3 getLight(vec3 point, int modelId) {
     vec3 toLightVector    = normalize(lightPosition - point);
     vec3 viewVector       = normalize(cameraPosition - point);
     vec3 normalVector     = getNormal(point, modelId);
@@ -263,12 +263,12 @@ vec3 getLight(vec3 point, uint modelId) {
     float dotNL = max(dot(normalVector, toLightVector), 0.0);
     float dotRV = max(dot(reflectionVector, viewVector), 0.0);
 
-    uint shadowModel;
-    float distToLight = rayMarch(point + normalVector * getHitDistance(point) * 2, toLightVector, shadowModel);
-    if (shadowModel != modelId && distToLight < length(lightPosition - point)) {
-        dotNL *= 0.1;
-        dotRV *= 0.1;
-    }
+    // uint shadowModel;
+    // float distToLight = rayMarch(point + normalVector * getHitDistance(point) * 2, toLightVector, shadowModel);
+    // if (shadowModel != modelId && distToLight < length(lightPosition - point)) {
+    //     dotNL *= 0.1;
+    //     dotRV *= 0.1;
+    // }
 
     // get material propertios
     Material material        = materials[models[modelId].materialId];
@@ -292,11 +292,17 @@ vec3 getLight(vec3 point, uint modelId) {
     return lightIntensity * (ambientLight + diffuseLight + specularLight);
 }
 
+
+///////////////////////////////////////////////////////////////////////////////
+// ENTRY POINT
+///////////////////////////////////////////////////////////////////////////////
+
+
 void main() {
     vec3  rayOrigin    = cameraPosition;
     vec3  rayDirection = normalize(cameraDirection + fragCoord.y * upRayDistorsion + fragCoord.x * leftRayDistorsion);
     vec3  color        = vec3(0.2, 0.2, 0.3);
-    uint modelId;
+    int modelId;
     float dist         = rayMarch(cameraPosition, rayDirection, modelId);
 
     // if hit then shade the point

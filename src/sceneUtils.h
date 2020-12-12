@@ -24,18 +24,26 @@ struct ShaderMaterial {
 
 struct ShaderModel {
     glm::mat4 transform;
-    glm::vec4 bbMin;
-    glm::vec4 bbMax;
     glm::u32  geometryId;
     glm::u32  materialId;
     glm::u32  primitiveCount;
     glm::f32  scale;
 };
 
+struct ShaderBVHNode {
+    glm::vec4 bbMin  = glm::vec4(0);
+    glm::vec4 bbMax  = glm::vec4(0);
+    glm::i32  left   = -1;
+    glm::i32  right  = -1;
+    glm::i32  parent = -1;
+    glm::i32  model  = -1;
+};
+
 struct ShaderSceneData {
     std::vector<ShaderPrimitive> primitives;
     std::vector<ShaderModel>     models;
     std::vector<ShaderMaterial>  materials;
+    std::vector<ShaderBVHNode>   bvh;
 };
 
 ShaderSceneData prepareShaderSceneData(const Scene& scene);

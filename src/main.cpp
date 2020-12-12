@@ -36,6 +36,7 @@ class App : public Application
     unique_ptr<UniformBuffer> primitiveBuffer;
     unique_ptr<UniformBuffer> materialBuffer;
     unique_ptr<UniformBuffer> modelBuffer;
+    unique_ptr<UniformBuffer> bvhBuffer;
 
     bool init() {
 
@@ -52,8 +53,7 @@ class App : public Application
         glClearColor(0, 0, 0, 1);
         glCreateVertexArrays(1, &vao);
 
-        updateScene();
-        return true;
+        return updateScene();
     }
 
     bool update(const Event &event) {
@@ -78,7 +78,7 @@ class App : public Application
     }
 
     // loads scene data to GPU
-    void updateScene() {
+    bool updateScene() {
 
         prg = make_unique<Program>(
             make_shared<Shader>(GL_VERTEX_SHADER, RESOURCE_SHADERS_VERTEX),
@@ -88,7 +88,7 @@ class App : public Application
 
         if (!prg->getErrorMessage().empty()) {
             cerr << "Error while creating a program: \n" << prg->getErrorMessage() << endl;
-            return;
+            return false;
         }
 
         // camera setup
@@ -115,11 +115,14 @@ class App : public Application
         primitiveBuffer = make_unique<UniformBuffer>(shaderData.primitives);
         materialBuffer  = make_unique<UniformBuffer>(shaderData.materials);
         modelBuffer     = make_unique<UniformBuffer>(shaderData.models);
+        bvhBuffer       = make_unique<UniformBuffer>(shaderData.bvh);
 
-        prg->uniform("PrimitivesBlock", *primitiveBuffer);
-        prg->uniform("MaterialBlock", *materialBuffer, 1);
-        prg->uniform("ModelsBlock", *modelBuffer, 2);
-        prg->uniform("modelsTotal", glm::u32(shaderData.models.size()));
+        prg->uniform("PrimitivesBlock", *primitiveBuffer, 0);
+        prg->uniform("MaterialBlock",   *materialBuffer,  1);
+        prg->uniform("ModelsBlock",     *modelBuffer,     2);
+        prg->uniform("BVHBlock",        *bvhBuffer,       3);
+
+        return true;
     }
 
     // loads camera dat to GPU

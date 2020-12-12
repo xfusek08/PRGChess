@@ -30,6 +30,8 @@
 using namespace std;
 using Json = nlohmann::json;
 
+int addBvhToVector(const AABBNode& node, vector<ShaderBVHNode>& target);
+
 template<size_t L>
 glm::vec<L, float> jsonToVec(Json value) {
     auto res = glm::vec<L, float>(0);
@@ -163,12 +165,8 @@ ShaderSceneData prepareShaderSceneData(const Scene& scene) {
 
     // load models to data
     for (const auto& actModel : scene.models) {
-        auto aabb = AABBHierarchy(scene);
-        auto bb = aabb.geometryBB(actModel.geometryIdent).transform(actModel.transform);
         auto shaderModel           = ShaderModel();
         shaderModel.transform      = actModel.transform.getTransform();
-        shaderModel.bbMin          = glm::vec4(bb.min, 1.0);
-        shaderModel.bbMax          = glm::vec4(bb.max, 1.0);
         shaderModel.geometryId     = get<0>(mgIdentMap[actModel.geometryIdent]);
         shaderModel.primitiveCount = get<1>(mgIdentMap[actModel.geometryIdent]);
         shaderModel.materialId     = maIdentMap[actModel.materialIdent];
@@ -176,5 +174,31 @@ ShaderSceneData prepareShaderSceneData(const Scene& scene) {
         data.models.push_back(shaderModel);
     }
 
+    // load bvh to data
+    auto aabb = AABBHierarchy(scene);
+    aabb.root->debugPrint();
+
+    data.bvh.reserve(data.models.size() * 2 + 2);
+    addBvhToVector(*aabb.root, data.bvh);
+
     return data;
+}
+
+int addBvhToVector(const AABBNode& node, vector<ShaderBVHNode>& target) {
+    auto bVolume = ShaderBVHNode();
+    bVolume.bbMin = glm::vec4(node.box.min, 1.0f);
+    bVolume.bbMax = glm::vec4(node.box.max, 1.0f);
+    bVolume.model = node.modelId;
+
+    auto actIndex = target.size();
+    target.push_back(bVolume);
+    if (node.left != nullptr) {
+        target[actIndex].left = addBvhToVector(*node.left, target);
+    }
+
+    if (node.right != nullptr) {
+        target[actIndex].right = addBvhToVector(*node.right, target);
+    }
+
+    return actIndex;
 }

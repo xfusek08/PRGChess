@@ -4,13 +4,18 @@
 // COMMON HEADER - move to separate file in the future
 ///////////////////////////////////////////////////////////////////////////
 
-#define MAX_STEPS    50
-#define MAX_DISTANCE 100.0
-#define HIT_DISTANCE 0.01
+#define MAX_STEPS           25
+#define MAX_DISTANCE        100.0
+#define HIT_DISTANCE_MAX    0.5
+#define HIT_DISTANCE_MIN    0.003
+#define HIT_DISTANCE_FACTOR 0.0001
 
+#define MAX_BVH_SIZE   100 // given the formula of 2*l - 1
 #define MAX_PRIMITIVES 100
-#define MAX_MODELS     10
+#define MAX_MODELS     50
 #define MAX_MATERIALS  10
+
+// enums
 
 #define TYPE_SPHERE     0
 #define TYPE_CAPSULE    1
@@ -25,6 +30,7 @@
 #define OPERATION_INTERSECT  2
 
 #define TEXTURE_CHESSBOARD 0
+#define INVALID_TEXTURE    100
 
 struct Primitive {
     uint type;
@@ -46,12 +52,19 @@ struct Material {
 
 struct Model {
     mat4 transform;
-    vec4 bbMin;
-    vec4 bbMax;
     uint geometryId; // offset to primitive buffer
     uint materialId;
     uint primitiveCount;
     float scale;
+};
+
+struct BVHNode {
+    vec4 bbMin;
+    vec4 bbMax;
+    int left;
+    int right;
+    int parent;
+    int model;
 };
 
 // uniform and buffers
@@ -59,8 +72,7 @@ struct Model {
 layout (std140) uniform PrimitivesBlock { Primitive primitives[MAX_PRIMITIVES]; };
 layout (std140) uniform MaterialBlock { Material materials[MAX_MODELS]; };
 layout (std140) uniform ModelsBlock { Model models[MAX_MODELS]; };
-
-uniform uint modelsTotal;
+layout (std140) uniform BVHBlock { BVHNode bvh[MAX_BVH_SIZE]; };
 
 ///////////////////////////////////////////////////////////////////////////
 // END OF COMMON HEADER
@@ -80,8 +92,10 @@ float smoothMax(float dist1, float dist2, float koeficient) {
     return mix(dist1, dist2, h ) + koeficient * h * (1.0-h);
 }
 
+float getHitDistance(vec3 point);
+
 // SDF definitions
-float sdModel(vec3 position, uint modelId);
+float sdModel(vec3 position, int modelId);
 float sdPrimitive(vec3 position, Primitive primitive);
 float sdSphere(vec3 position, Primitive sphere);
 float sdCapsule(vec3 position, Primitive capsule);
@@ -92,19 +106,10 @@ float sdCone(vec3 position, Primitive cone);
 float roundCone(vec3 position, Primitive roundCone);
 float sdBoundingBox(vec3 position, Primitive bBox, float thicness);
 
-float sdToScene(vec3 position, out uint modelId) { // this is for one model iside one AABB
-    float finalDist = MAX_DISTANCE;
-    for (int i = 0; i < modelsTotal; ++i) {
-        finalDist = min(sdModel(position, i), finalDist);
-        if (finalDist <= HIT_DISTANCE) {
-            modelId = i;
-            return finalDist;
-        }
-    };
-    return finalDist;
-};
+vec3 debugColor    = vec3(1,0,0);
+bool useDebugColor = false;
 
-float sdModel(vec3 position, uint modelId) {
+float sdModel(vec3 position, int modelId) {
 
     float finalDist = MAX_DISTANCE;
     Model model     = models[modelId];
@@ -144,11 +149,6 @@ float sdModel(vec3 position, uint modelId) {
     // // finalDist = min(sdBox(position, bb), finalDist);
 
     return finalDist;
-}
-
-float sdToScene(vec3 position) {
-    uint dummy = 0;
-    return sdToScene(position, dummy);
 }
 
 float sdPrimitive(vec3 position, Primitive primitive) {
