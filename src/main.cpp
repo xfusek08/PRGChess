@@ -106,7 +106,7 @@ class App : public Application
         orbitCamera = make_unique<OrbitCameraController>(cam);
         updateCamera();
 
-        prg->uniform("lightPosition", glm::vec3(0, 6, 0)); // in the future make light part of the scene
+        prg->uniform("lightPosition", glm::vec3(10, 10, 0)); // in the future make light part of the scene
 
         scene = buildSceneFromJson(RESOURCE_SCENE);
 

@@ -6,10 +6,20 @@
         }
     ],
     "materials": {
+        "whiteClay": {
+            "color": [ 0.925, 0.870, 0.752 ],
+            "specularColor": [ 0.8, 0.8, 0.8 ],
+            "shininess": 600
+        },
+        "blackClay": {
+            "color": [ 0.2, 0.2, 0.2 ],
+            "specularColor": [ 0.9, 0.9, 1.0 ],
+            "shininess": 200
+        },
         "blackPiece": {
-            "color": [ 0.24, 0.22, 0.22 ],
-            "specularColor": [ 1.1, 1, 1 ],
-            "shininess": 50
+            "color": [ 0.23, 0.2, 0.2 ],
+            "specularColor": [ 0.75, 0.75, 0.75 ],
+            "shininess": 30
         },
         "redClay": {
             "color": [ 0.7, 0.2, 0.2 ],
@@ -51,7 +61,7 @@
             { "type":  "cone",     "position": [  0, 0.41,  0 ], "height": 0.12, "diameterTop": 0.05, "diameterBottom": 0.4, "Rounding": 0.01, "blending": 0.01 },
             { "type":  "cilinder", "position": [  0, 0.33,  0 ], "width": 0.15, "height": 0.05, "Rounding": 0.02, "blending": 0.02 },
             { "type":  "cone",     "position": [  0, -0.33,  0 ], "height": 0.3, "diameterTop": 0.2, "diameterBottom": 0.6, "Rounding": 0.04, "blending": 0.1 },
-            { "type":  "box",      "position": [  0.15, 0.95,  0.0 ], "rotation": [0, 0, -70], "height" : 0.06, "width" : 0.7, "depth" : 0.6, "operation": "sub", "blending": 0.01}
+            { "type":  "box",      "position": [  0.15, 0.95,  0.0 ], "rotation": [0, 0, -70], "height" : 0.06, "width" : 0.6, "depth" : 0.6, "operation": "sub", "blending": 0.01}
         ],
         "rookGeometry": [
             { "type":  "cilinder", "position": [  0, 0.45,  0 ], "width": 0.45, "height": 0.25, "Rounding": 0.02, "blending": 0.02 },
@@ -100,18 +110,26 @@
                 "depth":  8.55,
                 "radius": 0.03
             },
-            { "type": "cilinder", "position": [  0.0, 0.3,  4.3 ], "rotation": [  0, 0, 90.0 ], "width": 0.5, "height": 10, "operation": "sub", "blending": 0.02 },
-            { "type": "cilinder", "position": [  0.0, 0.3, -4.3 ], "rotation": [  0, 0, 90.0 ], "width": 0.5, "height": 10, "operation": "sub", "blending": 0.02 },
-            { "type": "cilinder", "position": [  4.3, 0.3,  0.0 ], "rotation": [ 90, 0,  0.0 ], "width": 0.5, "height": 10, "operation": "sub", "blending": 0.02 },
-            { "type": "cilinder", "position": [ -4.3, 0.3,  0.0 ], "rotation": [ 90, 0,  0.0 ], "width": 0.5, "height": 10, "operation": "sub", "blending": 0.02 }
+            { "type": "cilinder", "position": [  0.0, 0.25,  4.4 ], "rotation": [  0, 0, 90.0 ], "width": 0.6, "height": 10, "operation": "sub", "blending": 0.02 },
+            { "type": "cilinder", "position": [  0.0, 0.25, -4.4 ], "rotation": [  0, 0, 90.0 ], "width": 0.6, "height": 10, "operation": "sub", "blending": 0.02 },
+            { "type": "cilinder", "position": [  4.4, 0.25,  0.0 ], "rotation": [ 90, 0,  0.0 ], "width": 0.6, "height": 10, "operation": "sub", "blending": 0.02 },
+            { "type": "cilinder", "position": [ -4.4, 0.25,  0.0 ], "rotation": [ 90, 0,  0.0 ], "width": 0.6, "height": 10, "operation": "sub", "blending": 0.02 }
+        ],
+        "tileGeometry": [
+            {
+                "type":  "box",
+                "width" : 1,
+                "height": 0.2,
+                "depth":  1,
+                "radius": 0.03
+            },
+            { "type": "cilinder", "position": [  0.0, 0.1,  0.5 ], "rotation": [  0, 0, 90.0 ], "width": 0.1, "height": 1, "operation": "sub", "blending": 0.02 },
+            { "type": "cilinder", "position": [  0.0, 0.1,  -0.5 ], "rotation": [  0, 0, 90.0 ], "width": 0.1, "height": 1, "operation": "sub", "blending": 0.02 },
+            { "type": "cilinder", "position": [  0.5, 0.1, 0 ], "rotation": [  90, 0, 0.0 ], "width": 0.1, "height": 1, "operation": "sub", "blending": 0.02 },
+            { "type": "cilinder", "position": [ -0.5, 0.1, 0 ], "rotation": [  90, 0, 0.0 ], "width": 0.1, "height": 1, "operation": "sub", "blending": 0.02 }
         ]
     },
     "models": [
-        {
-            "position": [ 0, -0.75, 0 ],
-            "geometry": "floorGeometry",
-            "material": "chessBoard"
-        },
         { "position": [  2.5, 0,  3.5 ], "geometry": "pawnGeometry", "material": "blackPiece" },
         { "position": [  2.5, 0,  2.5 ], "geometry": "pawnGeometry", "material": "blackPiece" },
         { "position": [  2.5, 0,  1.5 ], "geometry": "pawnGeometry", "material": "blackPiece" },
@@ -146,6 +164,71 @@
         { "position": [ -3.5, 0, -0.5 ], "geometry": "queenGeometry",  "material": "whitePiece", "rotation": [0, -90, 0] },
         { "position": [ -3.5, 0, -1.5 ], "geometry": "bishopGeometry", "material": "whitePiece", "rotation": [0, -90, 0] },
         { "position": [ -3.5, 0, -2.5 ], "geometry": "knightGeometry", "material": "whitePiece", "rotation": [0, -90, 0] },
-        { "position": [ -3.5, 0, -3.5 ], "geometry": "rookGeometry",   "material": "whitePiece", "rotation": [0, -90, 0] }
+        { "position": [ -3.5, 0, -3.5 ], "geometry": "rookGeometry",   "material": "whitePiece", "rotation": [0, -90, 0] },
+
+        { "position": [  0.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  0.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  0.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  0.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  0.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  0.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  0.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  0.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -0.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -0.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -0.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -0.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -0.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -0.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -0.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -0.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  1.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  1.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  1.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  1.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  1.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  1.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  1.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  1.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -1.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -1.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -1.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -1.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -1.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -1.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -1.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -1.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  2.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  2.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  2.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  2.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  2.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  2.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  2.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  2.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -2.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -2.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -2.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -2.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -2.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -2.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -2.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -2.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  3.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  3.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  3.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  3.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  3.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  3.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [  3.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [  3.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -3.5, -0.6,  3.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -3.5, -0.6,  2.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -3.5, -0.6,  1.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -3.5, -0.6,  0.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -3.5, -0.6, -0.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -3.5, -0.6, -1.5 ], "geometry": "tileGeometry", "material": "blackClay" },
+        { "position": [ -3.5, -0.6, -2.5 ], "geometry": "tileGeometry", "material": "whiteClay" },
+        { "position": [ -3.5, -0.6, -3.5 ], "geometry": "tileGeometry", "material": "blackClay" }
     ]
 }

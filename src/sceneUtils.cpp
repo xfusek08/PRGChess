@@ -30,7 +30,7 @@
 using namespace std;
 using Json = nlohmann::json;
 
-int addBvhToVector(const AABBNode& node, vector<ShaderBVHNode>& target);
+int addBvhToVector(const AABBNode& node, vector<ShaderBVHNode>& target, int parent = -1);
 
 template<size_t L>
 glm::vec<L, float> jsonToVec(Json value) {
@@ -184,20 +184,21 @@ ShaderSceneData prepareShaderSceneData(const Scene& scene) {
     return data;
 }
 
-int addBvhToVector(const AABBNode& node, vector<ShaderBVHNode>& target) {
+int addBvhToVector(const AABBNode& node, vector<ShaderBVHNode>& target, int parent) {
     auto bVolume = ShaderBVHNode();
     bVolume.bbMin = glm::vec4(node.box.min, 1.0f);
     bVolume.bbMax = glm::vec4(node.box.max, 1.0f);
     bVolume.model = node.modelId;
+    bVolume.parent = parent;
 
     auto actIndex = target.size();
     target.push_back(bVolume);
     if (node.left != nullptr) {
-        target[actIndex].left = addBvhToVector(*node.left, target);
+        target[actIndex].left = addBvhToVector(*node.left, target, actIndex);
     }
 
     if (node.right != nullptr) {
-        target[actIndex].right = addBvhToVector(*node.right, target);
+        target[actIndex].right = addBvhToVector(*node.right, target, actIndex);
     }
 
     return actIndex;
