@@ -176,7 +176,10 @@ ShaderSceneData prepareShaderSceneData(const Scene& scene) {
 
     // load bvh to data
     auto aabb = AABBHierarchy(scene);
+
+    #if DEBUG
     aabb.root->debugPrint();
+    #endif
 
     data.bvh.reserve(data.models.size() * 2 + 2);
     addBvhToVector(*aabb.root, data.bvh);
