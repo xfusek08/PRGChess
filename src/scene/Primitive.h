@@ -1,8 +1,10 @@
 #pragma once
 
 #include <scene/Transform.h>
+
 #include <unordered_map>
 #include <memory>
+#include <string>
 
 #define GET_SET_F(name, targetProperty, getFormula, setFormula) \
     inline float get##name() const { float value = get##targetProperty(); return (getFormula); } \

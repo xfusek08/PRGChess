@@ -3,18 +3,6 @@ project (PRGChess)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# load resource paths
-set(RESOURCE_FILES
-    # shaders
-    shaders/vertex.vs
-    shaders/fragment.fs
-    shaders/primitive_sdf.fs
-
-    # scene
-    scene.json
-)
-include(vendor/RenderBase/cmakeUtils/LoadResourceFiles.cmake)
-
 set(SOURCES
     src/main.cpp
     src/sceneUtils.h src/sceneUtils.cpp
@@ -30,6 +18,24 @@ set(SOURCES
 
     # vendor - to lazy to write header only lib cmake
 )
+
+# load resource paths
+set(RESOURCE_FILES
+    # shaders
+    shaders/vertex.vs
+    shaders/fragment.fs
+    shaders/primitive_sdf.fs
+
+    # scene
+    scene.json
+)
+
+include(vendor/RenderBase/cmakeUtils/LoadResourceFiles.cmake)
+
+message("----------------------------------------------")
+message(${RESOURCES_DEBUG_COMPILE_DEFINITIONS})
+message("----------------------------------------------")
+
 
 set(COMPILE_DEFINITIONS
     "PROJECT_NAME=\"${PROJECT_NAME}\""
