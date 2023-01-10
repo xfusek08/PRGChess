@@ -59,7 +59,7 @@ Rotating with mouse while holding left mouse button.
 
 
 ## Authors
-Petr Fusek
+[Petr Fusek](https://github.com/xfusek08)
 
 ## Thank to and credits
 
