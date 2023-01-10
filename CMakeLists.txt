@@ -3,6 +3,8 @@ project (PRGChess)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# set(CMAKE_CXX_CLANG_TIDY "clang-tidy;-checks=*")
+
 set(SOURCES
     src/main.cpp
     src/sceneUtils.h src/sceneUtils.cpp
@@ -15,61 +17,38 @@ set(SOURCES
     src/scene/Material.h
     src/scene/Model.h
     src/scene/Scene.h
-
-    # vendor - to lazy to write header only lib cmake
-)
-
-# load resource paths
-set(RESOURCE_FILES
-    # shaders
-    shaders/vertex.vs
-    shaders/fragment.fs
-    shaders/primitive_sdf.fs
-
-    # scene
-    scene.json
-)
-
-include(vendor/RenderBase/cmakeUtils/LoadResourceFiles.cmake)
-
-message("----------------------------------------------")
-message(${RESOURCES_DEBUG_COMPILE_DEFINITIONS})
-message("----------------------------------------------")
-
-
-set(COMPILE_DEFINITIONS
-    "PROJECT_NAME=\"${PROJECT_NAME}\""
-
-    # vscode intelisence  cannot recognize the genrator pattern so it has to be hard-coded
-    "DEBUG"
-    ${RESOURCES_DEBUG_COMPILE_DEFINITIONS}
-
-    # Proper compile redinitions
-    # $<$<CONFIG:Debug>:
-    #     "DEBUG"
-    #     ${SHADER_DEBUG_COMPILE_DEFINITIONS}
-    # >
-    # $<$<CONFIG:Release>:
-    #     ${SHADER_RELEASE_COMPILE_DEFINITIONS}
-    # >
 )
 
 add_subdirectory(vendor/RenderBase)
 add_subdirectory(vendor/json)
 
-add_executable(${PROJECT_NAME}
-    ${SOURCES}
-)
-
+add_executable(${PROJECT_NAME} ${SOURCES})
 target_link_libraries(${PROJECT_NAME} RenderBase json)
+target_include_directories(${PROJECT_NAME} PUBLIC src)
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    src
+# Load Resource file paths definitions
+include(vendor/RenderBase/cmakeUtils/LoadResourceFiles.cmake)
+load_resource_definitions(resources RESOURCES_DEBUG_DEFINITIONS RESOURCES_RELEASE_DEFINITIONS)
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC
+    "PROJECT_NAME=\"${PROJECT_NAME}\""
+    $<$<CONFIG:Debug>:DEBUG ${RESOURCES_DEBUG_DEFINITIONS}>
+    $<$<CONFIG:Release>:NDEBUG ${RESOURCES_RELEASE_DEFINITIONS}>
 )
 
-message(" ")
-message("====== ${PROJECT_NAME} compile definitions =======")
-message(${COMPILE_DEFINITIONS})
-message("==================================================")
-message(" ")
-target_compile_definitions(${PROJECT_NAME} PUBLIC ${COMPILE_DEFINITIONS})
+# Ensure that on release build we copy resources to build directory because release build is using relative path to resources
+# Implementation based on:
+#   https://stackoverflow.com/a/46439715
+# and on
+#   https://stackoverflow.com/a/13429998
+set(no_copy $<NOT:$<CONFIG:Release>>)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND "${CMAKE_COMMAND}" -E
+        $<${no_copy}:echo>
+        $<${no_copy}:"copy omitted for non-release build, command would have been ">
+        remove_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+    COMMAND "${CMAKE_COMMAND}" -E
+        $<${no_copy}:echo>
+        $<${no_copy}:"copy omitted for non-release build, command would have been ">
+        copy_directory ${CMAKE_SOURCE_DIR}/resources $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+)

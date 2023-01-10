@@ -79,18 +79,18 @@ class App : public Application
 
     // loads scene data to GPU
     bool updateScene() {
-
+        
         prg = make_unique<Program>(
-            make_shared<Shader>(GL_VERTEX_SHADER, RESOURCE_SHADERS_VERTEX),
-            make_shared<Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_PRIMITIVE_SDF),
-            make_shared<Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_FRAGMENT)
+            make_shared<Shader>(GL_VERTEX_SHADER, RESOURCE_SHADERS_VERTEX_VS),
+            make_shared<Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_PRIMITIVE_SDF_FS),
+            make_shared<Shader>(GL_FRAGMENT_SHADER, RESOURCE_SHADERS_FRAGMENT_FS)
         );
-
+        
         if (!prg->getErrorMessage().empty()) {
             cerr << "Error while creating a program: \n" << prg->getErrorMessage() << endl;
             return false;
         }
-
+        
         // camera setup
         auto camPos     = glm::vec3(0, 10, -10);
         auto camTarget  = glm::vec3(0, 0, 0);
@@ -105,23 +105,23 @@ class App : public Application
         cam->setTargetPosition(camTarget);
         orbitCamera = make_unique<OrbitCameraController>(cam);
         updateCamera();
-
+        
         prg->uniform("lightPosition", glm::vec3(10, 10, 0)); // in the future make light part of the scene
-
-        scene = buildSceneFromJson(RESOURCE_SCENE);
-
+        
+        scene = buildSceneFromJson(RESOURCE_SCENE_JSON);
+        
         auto shaderData = prepareShaderSceneData(*scene);
-
+        
         primitiveBuffer = make_unique<UniformBuffer>(shaderData.primitives);
         materialBuffer  = make_unique<UniformBuffer>(shaderData.materials);
         modelBuffer     = make_unique<UniformBuffer>(shaderData.models);
         bvhBuffer       = make_unique<UniformBuffer>(shaderData.bvh);
-
+        
         prg->uniform("PrimitivesBlock", *primitiveBuffer, 0);
         prg->uniform("MaterialBlock",   *materialBuffer,  1);
         prg->uniform("ModelsBlock",     *modelBuffer,     2);
         prg->uniform("BVHBlock",        *bvhBuffer,       3);
-
+        
         return true;
     }
 
@@ -131,14 +131,14 @@ class App : public Application
         LOG_DEBUG("Target:           " << glm::to_string(orbitCamera->camera->getTargetPosition()));
         LOG_DEBUG("Direction:        " << glm::to_string(orbitCamera->camera->getDirection()));
         LOG_DEBUG("cameraFOVDegrees: " << glm::degrees(orbitCamera->camera->getFov()));
-
+        
         float fovTangent = glm::tan(orbitCamera->camera->getFov() / 2.0f);
         prg->uniform("cameraPosition",    orbitCamera->camera->getPosition());
         prg->uniform("cameraDirection",   orbitCamera->camera->getDirection());
         prg->uniform("upRayDistorsion",   orbitCamera->camera->getOrientationUp()   * fovTangent);
         prg->uniform("leftRayDistorsion", orbitCamera->camera->getOrientationLeft() * fovTangent * orbitCamera->camera->getAspectRatio());
     }
-
+    
 };
 
 int main(int argc, char *argv[]) {
