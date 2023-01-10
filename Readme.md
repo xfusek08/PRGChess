@@ -9,7 +9,10 @@ This project is a simple scene renderer of a chessboard scene which is composed 
 
 Scene is stored and loaded from `resources/scene.json` file.
 
-Rendering is using a screen quad and a raymarching algorithm per-pixel in fragment shader.
+Rendering is using a screen quad and a raymarching algorithm per-pixel in fragment shader using techniques based on awesome blog of Inigo Quilez:
+
+https://iquilezles.org/articles/
+
 ## Installation and Running
 
 ### Prerequisites
@@ -51,6 +54,11 @@ make -j
 
 ## Controls
 Rotating with mouse while holding left mouse button.
+
+## Documentation
+[PGR-doc-xfusek08.pdf](doc/PGR-doc-xfusek08.pdf) (czech only)
+
+Despite low self-evaluation full 30/30 points were awarded 😉.
 
 ## Screenshots
 ![screenshot1](screenshots/screenshot1.png)
