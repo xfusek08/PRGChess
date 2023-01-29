@@ -1,13 +1,13 @@
 # PRGChess
 
-This repo contains a finished project to "Computer graphics" course at
+This repo contains a finished project for "Computer graphics" course at
 
-Brno University
-Of Technology - Faculty Of InformationTechnology.
+[Brno University
+Of Technology](https://www.vut.cz/en) - [*Faculty Of InformationTechnology*](https://www.fit.vut.cz/.en).
 
 This project is a simple scene renderer that visualizes a chessboard made up of Constructive Solid Geometry models using SDF primitives.
 
-Scene is loaded from resources/scene.json file.
+Scene is saved in and loaded from `resources/scene.json` file.
 
 The rendering process uses a screen quad and a per-pixel raymarching algorithm in the fragment shader, utilizing techniques inspired by the informative blog of Inigo Quilez:
 
@@ -38,6 +38,8 @@ make -j
 
 ### Release build
 
+Will copy the "resources/" directory into a "build/" directory because as the add in release build uses relative paths to resources files.
+
 ```bash
 mkdir build && cd build
 cmake -DCMAKE_BUILD_TYPE=Release ..
@@ -49,8 +51,6 @@ make -j
 ```bash
 ./PRGChess
 ```
-
-**NOTE:** For binary distribution make sure that it is compiled in `Release` mode and that `resources` folder is in the same directory as the binary.
 
 ## Controls
 Rotating with mouse while holding left mouse button.
