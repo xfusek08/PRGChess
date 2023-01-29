@@ -38,7 +38,7 @@ make -j
 
 ### Release build
 
-Will copy the "resources/" directory into a "build/" directory because as the add in release build uses relative paths to resources files.
+Will copy the `resources/` directory into a `build/` directory because as the add in release build uses relative paths to resources files.
 
 ```bash
 mkdir build && cd build
