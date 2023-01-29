@@ -58,7 +58,7 @@ Rotating with mouse while holding left mouse button.
 ## Documentation
 [PGR-doc-xfusek08.pdf](doc/PGR-doc-xfusek08.pdf) (czech only)
 
-Despite low self-evaluation full 30/30 points were awarded 😉.
+Despite low self-evaluation, full 30/30 points were awarded 😉.
 
 ## Screenshots
 ![screenshot1](screenshots/screenshot1.png)
