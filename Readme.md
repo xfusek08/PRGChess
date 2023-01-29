@@ -2,14 +2,14 @@
 
 This repo contains a finished project to "Computer graphics" course at
 
-[Brno University
-Of Technology](https://www.vut.cz/en) - [*Faculty Of InformationTechnology*](https://www.fit.vut.cz/.en).
+Brno University
+Of Technology - Faculty Of InformationTechnology.
 
-This project is a simple scene renderer of a chessboard scene which is composed of Constructive solid geometry models of SDF primitives.
+This project is a simple scene renderer that visualizes a chessboard made up of Constructive Solid Geometry models using SDF primitives.
 
-Scene is stored and loaded from `resources/scene.json` file.
+Scene is loaded from resources/scene.json file.
 
-Rendering is using a screen quad and a raymarching algorithm per-pixel in fragment shader using techniques based on awesome blog of Inigo Quilez:
+The rendering process uses a screen quad and a per-pixel raymarching algorithm in the fragment shader, utilizing techniques inspired by the informative blog of Inigo Quilez:
 
 https://iquilezles.org/articles/
 
